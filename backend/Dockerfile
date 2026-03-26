@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 RUN apk add --no-cache gcc musl-dev sqlite-dev
 
@@ -9,7 +9,7 @@ COPY . .
 RUN go mod tidy
 RUN CGO_ENABLED=1 GOOS=linux go build -o /docms-server ./cmd/main.go
 
-FROM alpine:3.19
+FROM alpine:3.21
 RUN apk add --no-cache ca-certificates sqlite-libs curl
 COPY --from=builder /docms-server /usr/local/bin/docms-server
 
