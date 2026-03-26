@@ -12,8 +12,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY worker.py .
+COPY shared.py activities.py workflows.py run_worker.py ./
 
 RUN mkdir -p /data/uploads
 
-CMD ["python", "worker.py"]
+CMD ["python", "run_worker.py"]
