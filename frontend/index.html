@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocMS — Document Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        ink: { 50:'#f6f7f9',100:'#eceef2',200:'#d5d9e2',300:'#b1b9c9',400:'#8793ab',500:'#687691',600:'#535f78',700:'#444d62',800:'#3b4253',900:'#343947',950:'#1e2028' },
+                        signal: { blue:'#3b82f6', green:'#10b981', amber:'#f59e0b', red:'#ef4444', purple:'#8b5cf6' },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { scrollbar-width: thin; scrollbar-color: #444d62 transparent; }
+        body { background: #0f1117; color: #eceef2; }
+        .card-glass { background: rgba(30,32,40,0.85); border: 1px solid rgba(68,77,98,0.35); backdrop-filter: blur(12px); }
+        .input-field { background: rgba(52,57,71,0.5); border: 1px solid rgba(68,77,98,0.5); transition: border-color 0.2s; }
+        .input-field:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); transition: all 0.2s; }
+        .btn-primary:hover { box-shadow: 0 4px 20px rgba(59,130,246,0.35); transform: translateY(-1px); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-temporal { background: linear-gradient(135deg, #8b5cf6, #7c3aed); transition: all 0.2s; }
+        .btn-temporal:hover { box-shadow: 0 4px 20px rgba(139,92,246,0.35); transform: translateY(-1px); }
+        .badge-public { background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.25); }
+        .badge-private { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.25); }
+        .badge-temporal { background: rgba(139,92,246,0.12); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.25); }
+        .fade-in { animation: fadeIn 0.35s ease-out; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .status-dot { animation: pulse-dot 1.5s infinite; }
+        .spinner { animation: spin 1s linear infinite; border: 2px solid rgba(139,92,246,0.2); border-top-color: #8b5cf6; border-radius: 50%; width: 14px; height: 14px; display: inline-block; }
+        .perm-tag { font-size: 0.65rem; padding: 2px 8px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace; }
+        .grid-bg { background-image: radial-gradient(rgba(68,77,98,0.18) 1px, transparent 1px); background-size: 24px 24px; }
+        em { background: rgba(59,130,246,0.25); font-style: normal; padding: 1px 3px; border-radius: 2px; }
+        .toggle-track { width: 40px; height: 22px; border-radius: 11px; background: rgba(68,77,98,0.6); position: relative; cursor: pointer; transition: background 0.2s; }
+        .toggle-track.active { background: rgba(139,92,246,0.5); }
+        .toggle-thumb { width: 18px; height: 18px; border-radius: 50%; background: #9ca3af; position: absolute; top: 2px; left: 2px; transition: all 0.2s; }
+        .toggle-track.active .toggle-thumb { left: 20px; background: #8b5cf6; }
+    </style>
+</head>
+<body class="h-full font-sans grid-bg">
+
+<div id="app" class="h-full flex flex-col">
+
+    <!-- LOGIN VIEW -->
+    <div id="view-login" class="flex-1 flex items-center justify-center p-4">
+        <div class="card-glass rounded-2xl p-8 w-full max-w-md fade-in">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center gap-2 mb-4">
+                    <svg class="w-8 h-8 text-signal-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                    <span class="text-2xl font-bold tracking-tight">DocMS</span>
+                </div>
+                <p class="text-ink-400 text-sm">Classified Document Management</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-ink-400 mb-1.5 uppercase tracking-wider">Username</label>
+                    <input id="login-username" type="text" placeholder="Enter username" class="input-field w-full rounded-lg px-4 py-2.5 text-sm text-ink-100 placeholder-ink-500 font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-ink-400 mb-1.5 uppercase tracking-wider">Password</label>
+                    <input id="login-password" type="password" placeholder="Enter password" class="input-field w-full rounded-lg px-4 py-2.5 text-sm text-ink-100 placeholder-ink-500 font-mono" onkeydown="if(event.key==='Enter')login()">
+                </div>
+                <div id="login-error" class="text-signal-red text-xs hidden"></div>
+                <button onclick="login()" class="btn-primary w-full rounded-lg py-2.5 text-sm font-medium text-white">Sign In</button>
+            </div>
+            <div class="mt-8 pt-6 border-t border-ink-800/50">
+                <p class="text-xs text-ink-500 mb-3 uppercase tracking-wider font-medium">Demo Accounts</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="quickLogin('public_reader','reader123')" class="text-left p-2.5 rounded-lg bg-ink-950/50 hover:bg-ink-800/40 transition-colors">
+                        <div class="text-xs font-mono text-ink-300">public_reader</div>
+                        <div class="text-[10px] text-ink-500 mt-0.5">Search public</div>
+                    </button>
+                    <button onclick="quickLogin('public_editor','editor123')" class="text-left p-2.5 rounded-lg bg-ink-950/50 hover:bg-ink-800/40 transition-colors">
+                        <div class="text-xs font-mono text-ink-300">public_editor</div>
+                        <div class="text-[10px] text-ink-500 mt-0.5">Search + Upload public</div>
+                    </button>
+                    <button onclick="quickLogin('private_reader','private123')" class="text-left p-2.5 rounded-lg bg-ink-950/50 hover:bg-ink-800/40 transition-colors">
+                        <div class="text-xs font-mono text-ink-300">private_reader</div>
+                        <div class="text-[10px] text-ink-500 mt-0.5">Search public+private</div>
+                    </button>
+                    <button onclick="quickLogin('admin','admin123')" class="text-left p-2.5 rounded-lg bg-ink-950/50 hover:bg-ink-800/40 transition-colors">
+                        <div class="text-xs font-mono text-ink-300">admin</div>
+                        <div class="text-[10px] text-ink-500 mt-0.5">Full access</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP VIEW -->
+    <div id="view-app" class="flex-1 flex flex-col hidden">
+
+        <!-- Top Bar -->
+        <header class="card-glass border-t-0 border-x-0 px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 text-signal-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                <span class="text-lg font-bold tracking-tight">DocMS</span>
+                <span class="text-xs text-ink-500 border-l border-ink-700 pl-3 ml-1">Classified Document Search</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="temporal-indicator" class="flex items-center gap-1.5 hidden">
+                    <div class="w-2 h-2 rounded-full bg-signal-purple status-dot"></div>
+                    <span class="text-[10px] font-mono text-signal-purple">Temporal</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-signal-green status-dot"></div>
+                    <span id="user-display" class="text-xs font-mono text-ink-400"></span>
+                </div>
+                <div id="user-perms" class="flex gap-1.5 flex-wrap"></div>
+                <button onclick="logout()" class="text-xs text-ink-500 hover:text-signal-red transition-colors font-medium">Sign Out</button>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <main class="flex-1 overflow-auto p-6">
+            <div class="max-w-5xl mx-auto space-y-6">
+
+                <!-- Upload Section -->
+                <div id="upload-section" class="card-glass rounded-xl p-6 fade-in hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-ink-400 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                            Upload Document
+                        </h2>
+                        <!-- Temporal Toggle -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] uppercase tracking-wider text-ink-500">Static</span>
+                            <div id="temporal-toggle" class="toggle-track" onclick="toggleTemporal()">
+                                <div class="toggle-thumb"></div>
+                            </div>
+                            <span class="text-[10px] uppercase tracking-wider text-signal-purple">Temporal</span>
+                        </div>
+                    </div>
+
+                    <!-- Temporal mode info banner -->
+                    <div id="temporal-banner" class="hidden mb-4 px-3 py-2 rounded-lg bg-signal-purple/10 border border-signal-purple/20">
+                        <p class="text-xs text-signal-purple">Temporal workflow mode — files processed by Python worker with real text extraction (docx, pdf, csv, images OCR) and indexed to Elasticsearch.</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-end gap-4">
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-xs text-ink-500 mb-1">File</label>
+                            <input id="upload-file" type="file" accept=".txt,.md,.csv,.tsv,.json,.xml,.html,.htm,.pdf,.doc,.docx,.xlsx,.xls,.rtf,.png,.jpg,.jpeg,.tiff,.tif,.bmp,.gif,.webp" class="input-field w-full rounded-lg px-3 py-2 text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-signal-blue/20 file:text-signal-blue cursor-pointer">
+                        </div>
+                        <div class="w-48">
+                            <label class="block text-xs text-ink-500 mb-1">Classification</label>
+                            <select id="upload-class" class="input-field w-full rounded-lg px-3 py-2 text-sm appearance-none cursor-pointer"></select>
+                        </div>
+                        <button id="upload-btn" onclick="uploadDocument()" class="btn-primary rounded-lg px-6 py-2 text-sm font-medium text-white whitespace-nowrap">Upload &amp; Process</button>
+                    </div>
+                    <div id="upload-status" class="mt-3 text-xs hidden"></div>
+                </div>
+
+                <!-- Temporal Workflow Tracker -->
+                <div id="workflow-section" class="card-glass rounded-xl p-6 fade-in hidden">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-ink-400 mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-signal-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        Temporal Workflows
+                        <a href="http://localhost:8088" target="_blank" class="ml-auto text-[10px] text-signal-purple hover:underline font-normal normal-case tracking-normal">Open Temporal UI</a>
+                    </h2>
+                    <div id="workflow-list" class="space-y-2">
+                        <p class="text-xs text-ink-500">No active workflows</p>
+                    </div>
+                </div>
+
+                <!-- Search Section -->
+                <div class="card-glass rounded-xl p-6 fade-in">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-ink-400 mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        Search Documents
+                    </h2>
+                    <div class="flex gap-3">
+                        <input id="search-query" type="text" placeholder="Search across documents you have access to..." class="input-field flex-1 rounded-lg px-4 py-2.5 text-sm text-ink-100 placeholder-ink-500" onkeydown="if(event.key==='Enter')searchDocuments()">
+                        <button onclick="searchDocuments()" class="btn-primary rounded-lg px-6 py-2.5 text-sm font-medium text-white">Search</button>
+                    </div>
+                    <div id="search-meta" class="mt-2 text-xs text-ink-500 hidden"></div>
+                </div>
+
+                <!-- Results -->
+                <div id="results-section" class="space-y-3 hidden">
+                    <div id="results-list"></div>
+                </div>
+
+                <!-- Empty state -->
+                <div id="empty-state" class="text-center py-16 fade-in">
+                    <svg class="w-16 h-16 mx-auto text-ink-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <p class="text-ink-500 text-sm">Upload documents or search to get started</p>
+                    <p class="text-ink-600 text-xs mt-1">Toggle Temporal mode for real text extraction (PDF, DOCX, CSV, images OCR)</p>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+// ---- Config & State ----
+const API = window.location.hostname === 'localhost' || window.location.port === '3000'
+    ? `${window.location.protocol}//${window.location.hostname}:8080`
+    : '';
+
+let state = {
+    token: localStorage.getItem('docms_token') || null,
+    user: JSON.parse(localStorage.getItem('docms_user') || 'null'),
+    useTemporal: localStorage.getItem('docms_temporal') === 'true',
+    workflows: JSON.parse(localStorage.getItem('docms_workflows') || '[]'),
+};
+
+// ---- API Helper ----
+async function api(path, opts = {}) {
+    const headers = { ...opts.headers };
+    if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
+    if (!(opts.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+    const res = await fetch(`${API}${path}`, { ...opts, headers });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data;
+}
+
+// ---- Auth ----
+async function login() {
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errEl = document.getElementById('login-error');
+    if (!username || !password) { errEl.textContent = 'Username and password required'; errEl.classList.remove('hidden'); return; }
+    try {
+        errEl.classList.add('hidden');
+        const data = await api('/api/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+        state.token = data.token;
+        state.user = data.user;
+        localStorage.setItem('docms_token', data.token);
+        localStorage.setItem('docms_user', JSON.stringify(data.user));
+        showApp();
+    } catch (e) { errEl.textContent = e.message; errEl.classList.remove('hidden'); }
+}
+function quickLogin(u, p) { document.getElementById('login-username').value = u; document.getElementById('login-password').value = p; login(); }
+function logout() {
+    state.token = null; state.user = null; state.workflows = [];
+    localStorage.removeItem('docms_token'); localStorage.removeItem('docms_user'); localStorage.removeItem('docms_workflows');
+    showLogin();
+}
+
+// ---- Navigation ----
+function showLogin() {
+    document.getElementById('view-login').classList.remove('hidden');
+    document.getElementById('view-app').classList.add('hidden');
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+}
+function showApp() {
+    document.getElementById('view-login').classList.add('hidden');
+    document.getElementById('view-app').classList.remove('hidden');
+    document.getElementById('user-display').textContent = state.user.username;
+
+    const permsEl = document.getElementById('user-perms');
+    permsEl.innerHTML = (state.user.permissions || []).map(p => {
+        const isPrivate = p.includes('private');
+        return `<span class="perm-tag ${isPrivate ? 'badge-private' : 'badge-public'}">${p.replace(/_/g, ' ')}</span>`;
+    }).join('');
+
+    const canUpload = (state.user.permissions || []).some(p => p.includes('upload'));
+    document.getElementById('upload-section').classList.toggle('hidden', !canUpload);
+
+    const select = document.getElementById('upload-class');
+    select.innerHTML = '';
+    const perms = state.user.permissions || [];
+    if (perms.includes('public_upload')) select.innerHTML += '<option value="public">Public</option>';
+    if (perms.includes('private_upload')) select.innerHTML += '<option value="private">Private</option>';
+
+    updateTemporalUI();
+    renderWorkflows();
+    checkHealth();
+}
+
+// ---- Temporal Toggle ----
+function toggleTemporal() {
+    state.useTemporal = !state.useTemporal;
+    localStorage.setItem('docms_temporal', state.useTemporal);
+    updateTemporalUI();
+}
+function updateTemporalUI() {
+    const toggle = document.getElementById('temporal-toggle');
+    const banner = document.getElementById('temporal-banner');
+    const btn = document.getElementById('upload-btn');
+    const indicator = document.getElementById('temporal-indicator');
+    const wfSection = document.getElementById('workflow-section');
+
+    if (state.useTemporal) {
+        toggle.classList.add('active');
+        banner.classList.remove('hidden');
+        btn.className = 'btn-temporal rounded-lg px-6 py-2 text-sm font-medium text-white whitespace-nowrap';
+        btn.textContent = 'Upload via Temporal';
+        indicator.classList.remove('hidden');
+        wfSection.classList.remove('hidden');
+    } else {
+        toggle.classList.remove('active');
+        banner.classList.add('hidden');
+        btn.className = 'btn-primary rounded-lg px-6 py-2 text-sm font-medium text-white whitespace-nowrap';
+        btn.textContent = 'Upload & Process';
+        indicator.classList.add('hidden');
+        wfSection.classList.add('hidden');
+    }
+}
+
+// ---- Health Check ----
+async function checkHealth() {
+    try {
+        const h = await api('/api/health');
+        if (h.temporal === 'connected') {
+            document.getElementById('temporal-indicator').title = 'Temporal connected';
+        }
+    } catch (e) {}
+}
+
+// ---- Upload ----
+async function uploadDocument() {
+    const fileInput = document.getElementById('upload-file');
+    const classification = document.getElementById('upload-class').value;
+    const statusEl = document.getElementById('upload-status');
+    if (!fileInput.files[0]) { showStatus(statusEl, 'Please select a file', 'text-signal-amber'); return; }
+
+    const form = new FormData();
+    form.append('file', fileInput.files[0]);
+    form.append('classification', classification);
+    if (state.useTemporal) form.append('use_temporal', 'true');
+
+    const mode = state.useTemporal ? 'Temporal workflow' : 'static pipeline';
+    showStatus(statusEl, `Uploading via ${mode}...`, 'text-signal-blue');
+
+    try {
+        const data = await api('/api/upload', { method: 'POST', body: form });
+
+        if (data.workflow_id) {
+            // Temporal mode — track workflow
+            const wf = {
+                workflow_id: data.workflow_id,
+                run_id: data.run_id,
+                document_id: data.document_id,
+                filename: fileInput.files[0].name,
+                classification: classification,
+                started_at: new Date().toISOString(),
+                status: 'RUNNING',
+            };
+            state.workflows.unshift(wf);
+            localStorage.setItem('docms_workflows', JSON.stringify(state.workflows));
+            renderWorkflows();
+            pollWorkflowStatus(wf.workflow_id);
+            showStatus(statusEl, `Temporal workflow started: ${data.workflow_id.slice(0,30)}...`, 'text-signal-purple');
+        } else {
+            showStatus(statusEl, `${data.message} (ID: ${data.document_id.slice(0,8)}...)`, 'text-signal-green');
+        }
+        fileInput.value = '';
+    } catch (e) {
+        showStatus(statusEl, `Upload failed: ${e.message}`, 'text-signal-red');
+    }
+}
+
+// ---- Workflow Status Polling ----
+async function pollWorkflowStatus(workflowID) {
+    let attempts = 0;
+    const maxAttempts = 60;
+    const interval = setInterval(async () => {
+        attempts++;
+        if (attempts > maxAttempts) { clearInterval(interval); return; }
+        try {
+            const data = await api(`/api/temporal/status?workflow_id=${encodeURIComponent(workflowID)}`);
+            const wf = state.workflows.find(w => w.workflow_id === workflowID);
+            if (wf) {
+                wf.status = data.status;
+                localStorage.setItem('docms_workflows', JSON.stringify(state.workflows));
+                renderWorkflows();
+            }
+            if (data.status !== 'WORKFLOW_EXECUTION_STATUS_RUNNING') {
+                clearInterval(interval);
+            }
+        } catch (e) {
+            // keep polling
+        }
+    }, 2000);
+}
+
+function renderWorkflows() {
+    const list = document.getElementById('workflow-list');
+    if (!state.workflows.length) {
+        list.innerHTML = '<p class="text-xs text-ink-500">No workflows yet. Upload a file with Temporal mode enabled.</p>';
+        return;
+    }
+
+    list.innerHTML = state.workflows.slice(0, 10).map(wf => {
+        const statusMap = {
+            'RUNNING': { color: 'text-signal-purple', icon: '<span class="spinner"></span>', label: 'Running' },
+            'WORKFLOW_EXECUTION_STATUS_RUNNING': { color: 'text-signal-purple', icon: '<span class="spinner"></span>', label: 'Running' },
+            'WORKFLOW_EXECUTION_STATUS_COMPLETED': { color: 'text-signal-green', icon: '&#10003;', label: 'Completed' },
+            'WORKFLOW_EXECUTION_STATUS_FAILED': { color: 'text-signal-red', icon: '&#10007;', label: 'Failed' },
+            'WORKFLOW_EXECUTION_STATUS_TIMED_OUT': { color: 'text-signal-amber', icon: '&#9888;', label: 'Timed Out' },
+            'WORKFLOW_EXECUTION_STATUS_CANCELED': { color: 'text-ink-400', icon: '&#8212;', label: 'Canceled' },
+        };
+        const s = statusMap[wf.status] || { color: 'text-ink-400', icon: '?', label: wf.status };
+        const ago = timeAgo(wf.started_at);
+
+        return `<div class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-ink-950/40 border border-ink-800/30">
+            <span class="${s.color} text-sm flex-shrink-0">${s.icon}</span>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-medium text-ink-200 truncate">${escHtml(wf.filename)}</span>
+                    <span class="perm-tag ${wf.classification==='private'?'badge-private':'badge-public'}">${wf.classification}</span>
+                </div>
+                <div class="text-[10px] font-mono text-ink-600 truncate mt-0.5">${wf.workflow_id}</div>
+            </div>
+            <div class="text-right flex-shrink-0">
+                <span class="text-[11px] font-medium ${s.color}">${s.label}</span>
+                <div class="text-[10px] text-ink-600">${ago}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ---- Search ----
+async function searchDocuments() {
+    const query = document.getElementById('search-query').value.trim();
+    if (!query) return;
+    const metaEl = document.getElementById('search-meta');
+    const resultsSection = document.getElementById('results-section');
+    const resultsList = document.getElementById('results-list');
+    const emptyState = document.getElementById('empty-state');
+
+    metaEl.textContent = 'Searching...';
+    metaEl.classList.remove('hidden');
+
+    try {
+        const data = await api('/api/search', { method: 'POST', body: JSON.stringify({ query, page: 1, size: 20 }) });
+        emptyState.classList.add('hidden');
+
+        if (!data.results || data.results.length === 0) {
+            metaEl.textContent = `No results for "${query}"`;
+            resultsSection.classList.add('hidden');
+            return;
+        }
+
+        const classifications = (state.user.permissions||[]).filter(p=>p.includes('search')).map(p=>p.includes('private')?'private':'public');
+        metaEl.textContent = `${data.total} result${data.total!==1?'s':''} for "${query}" — access: ${classifications.join(', ')}`;
+        resultsSection.classList.remove('hidden');
+
+        resultsList.innerHTML = data.results.map(hit => `
+            <div class="card-glass rounded-lg p-4 fade-in mb-3">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm font-medium text-ink-200 truncate">${escHtml(hit.filename)}</span>
+                            <span class="perm-tag ${hit.classification==='private' ? 'badge-private' : 'badge-public'}">${hit.classification}</span>
+                        </div>
+                        <p class="text-xs text-ink-400 leading-relaxed" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${hit.highlight || truncate(hit.content, 300)}</p>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <div class="text-xs font-mono text-ink-500">${hit.score.toFixed(2)}</div>
+                        <div class="text-[10px] text-ink-600">score</div>
+                    </div>
+                </div>
+                <div class="mt-2 text-[10px] font-mono text-ink-600">${hit.doc_id}</div>
+            </div>
+        `).join('');
+    } catch (e) {
+        metaEl.textContent = `Search error: ${e.message}`;
+        metaEl.className = 'mt-2 text-xs text-signal-red';
+    }
+}
+
+// ---- Helpers ----
+function showStatus(el, msg, cls) { el.textContent = msg; el.className = `mt-3 text-xs ${cls}`; el.classList.remove('hidden'); }
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function truncate(s, n) { if (!s) return ''; return s.length > n ? escHtml(s.slice(0, n)) + '...' : escHtml(s); }
+function timeAgo(iso) {
+    const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (s < 60) return `${s}s ago`;
+    if (s < 3600) return `${Math.floor(s/60)}m ago`;
+    if (s < 86400) return `${Math.floor(s/3600)}h ago`;
+    return `${Math.floor(s/86400)}d ago`;
+}
+
+// ---- Init ----
+if (state.token && state.user) {
+    showApp();
+    // Resume polling any RUNNING workflows
+    state.workflows.filter(w => w.status === 'RUNNING' || w.status === 'WORKFLOW_EXECUTION_STATUS_RUNNING').forEach(w => pollWorkflowStatus(w.workflow_id));
+} else {
+    showLogin();
+}
+</script>
+</body>
+</html>

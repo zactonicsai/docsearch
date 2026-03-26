@@ -1,0 +1,18 @@
+system.forceSearchAttributesCacheRefreshOnRead:
+  - value: true
+    constraints: {}
+limit.maxIDLength:
+  - value: 255
+    constraints: {}
+frontend.enableClientVersionCheck:
+  - value: true
+    constraints: {}
+history.persistenceMaxQPS:
+  - value: 3000
+    constraints: {}
+frontend.persistenceMaxQPS:
+  - value: 3000
+    constraints: {}
+matching.persistenceMaxQPS:
+  - value: 3000
+    constraints: {}

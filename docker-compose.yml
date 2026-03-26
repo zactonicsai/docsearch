@@ -1,0 +1,204 @@
+version: "3.8"
+
+services:
+  # == PostgreSQL (Temporal persistence) ====================
+  temporal-postgresql:
+    image: postgres:17
+    container_name: docms-temporal-db
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_DB: temporal
+    volumes:
+      - temporal_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temporal"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - docms-net
+
+  # == Temporal Server ======================================
+  temporal:
+    image: temporalio/auto-setup
+    container_name: docms-temporal
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=temporal-postgresql
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+      - SKIP_DEFAULT_NAMESPACE_CREATION=false
+    ports:
+      - "7233:7233"
+    volumes:
+      - ./temporal/dynamicconfig.yaml:/etc/temporal/config/dynamicconfig/development-sql.yaml
+    depends_on:
+      temporal-postgresql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "tctl", "--address", "temporal:7233", "cluster", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    networks:
+      - docms-net
+
+  # == Temporal Web UI ======================================
+  temporal-ui:
+    image: temporalio/ui
+    container_name: docms-temporal-ui
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    ports:
+      - "8088:8080"
+    depends_on:
+      temporal:
+        condition: service_healthy
+    networks:
+      - docms-net
+
+  # == Elasticsearch ========================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: docms-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.name=docms-cluster
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    networks:
+      - docms-net
+
+  # == Kibana ===============================================
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.0
+    container_name: docms-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:5601/api/status | grep -q '\"overall\":{\"level\":\"available\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+    networks:
+      - docms-net
+
+  # == Go Backend API =======================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: docms-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - TEMPORAL_HOST=temporal:7233
+      - SERVER_PORT=8080
+      - AUTH_DB_PATH=/data/auth.db
+      - UPLOAD_DIR=/data/uploads
+    volumes:
+      - backend_data:/data
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - docms-net
+
+  # == Python Temporal Worker ===============================
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: docms-worker
+    environment:
+      - TEMPORAL_HOST=temporal:7233
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - BACKEND_URL=http://backend:8080
+      - UPLOAD_DIR=/data/uploads
+    volumes:
+      - backend_data:/data
+    depends_on:
+      temporal:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - docms-net
+
+  # == Frontend (Nginx) =====================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: docms-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - docms-net
+
+  # == Integration Test Runner ==============================
+  test-runner:
+    build:
+      context: ./test
+      dockerfile: Dockerfile
+    container_name: docms-test-runner
+    environment:
+      - BACKEND_URL=http://backend:8080
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - KIBANA_URL=http://kibana:5601
+    depends_on:
+      backend:
+        condition: service_healthy
+      kibana:
+        condition: service_healthy
+      worker:
+        condition: service_started
+    profiles:
+      - test
+    networks:
+      - docms-net
+
+volumes:
+  es_data:
+  backend_data:
+  temporal_pg_data:
+
+networks:
+  docms-net:
+    driver: bridge

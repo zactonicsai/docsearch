@@ -1,0 +1,6 @@
+# Temporal dynamic configuration for development (PostgreSQL + Elasticsearch).
+# This file is mounted into the container at /etc/temporal/config/dynamicconfig/
+# and referenced via DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+#
+# Empty config = all defaults.  Add overrides below as needed.
+# See: https://docs.temporal.io/references/dynamic-configuration
