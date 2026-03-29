@@ -1,0 +1,2518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spring Boot 3.5 Masterclass — Complete Tutorial</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: {
+        serif: ['"Source Serif 4"', 'Georgia', 'serif'],
+        sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
+      },
+      colors: {
+        spring: { 50:'#f0fdf4',100:'#dcfce7',200:'#bbf7d0',300:'#6ee7b7',400:'#34d399',500:'#6db33f',600:'#5a9a34',700:'#3d6b23',800:'#2d4f1a',900:'#1a3010' },
+        ink: { 50:'#fafaf9',100:'#f5f5f4',200:'#e7e5e4',300:'#d6d3d1',400:'#a8a29e',500:'#78716c',600:'#57534e',700:'#44403c',800:'#292524',900:'#1c1917',950:'#0f0e0d' },
+      }
+    }
+  }
+}
+</script>
+<style>
+  :root {
+    --bg-primary: #fafaf9;
+    --bg-secondary: #f5f5f4;
+    --bg-code: #1c1917;
+    --text-primary: #1c1917;
+    --text-secondary: #57534e;
+    --accent: #6db33f;
+    --accent-dim: #5a9a34;
+    --border: #e7e5e4;
+    --nav-bg: #ffffff;
+    --card-bg: #ffffff;
+    --code-header: #292524;
+  }
+  .dark {
+    --bg-primary: #0f0e0d;
+    --bg-secondary: #1c1917;
+    --bg-code: #0f0e0d;
+    --text-primary: #f5f5f4;
+    --text-secondary: #a8a29e;
+    --accent: #6ee7b7;
+    --accent-dim: #34d399;
+    --border: #292524;
+    --nav-bg: #1c1917;
+    --card-bg: #1c1917;
+    --code-header: #292524;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--bg-primary); color: var(--text-primary); }
+  h1,h2,h3,h4 { font-family: 'Source Serif 4', Georgia, serif; }
+  pre, code { font-family: 'JetBrains Mono', monospace; }
+
+  .code-block {
+    background: var(--bg-code);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    margin: 1rem 0;
+    border: 1px solid var(--border);
+  }
+  .code-header {
+    background: var(--code-header);
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .code-header span { color: #a8a29e; font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; }
+  .code-header button { color: #6ee7b7; font-size: 0.75rem; background: rgba(110,231,183,0.1); border: 1px solid rgba(110,231,183,0.2); padding: 0.25rem 0.75rem; border-radius: 0.375rem; cursor: pointer; transition: all 0.2s; }
+  .code-header button:hover { background: rgba(110,231,183,0.2); }
+  .code-body { padding: 1rem; overflow-x: auto; }
+  .code-body pre { margin: 0; color: #e7e5e4; font-size: 0.82rem; line-height: 1.7; white-space: pre; }
+
+  .section-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    transition: all 0.3s;
+  }
+  .section-card:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(0,0,0,0.06); }
+  .dark .section-card:hover { box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(0,0,0,0.3); }
+
+  .nav-item { padding: 0.4rem 1rem; border-left: 2px solid transparent; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; color: var(--text-secondary); }
+  .nav-item:hover { color: var(--accent); border-left-color: var(--accent); background: rgba(109,179,63,0.05); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+
+  .badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .badge-green { background: rgba(109,179,63,0.15); color: #6db33f; }
+  .dark .badge-green { background: rgba(110,231,183,0.15); color: #6ee7b7; }
+  .badge-blue { background: rgba(59,130,246,0.15); color: #3b82f6; }
+  .badge-amber { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .badge-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+  .tip-box {
+    border-left: 3px solid var(--accent);
+    background: rgba(109,179,63,0.06);
+    padding: 1rem 1.25rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  .warn-box {
+    border-left: 3px solid #f59e0b;
+    background: rgba(245,158,11,0.06);
+    padding: 1rem 1.25rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+
+  .collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+  .collapsible-content.open { max-height: 100000px; }
+
+  .quiz-option { cursor: pointer; border: 2px solid var(--border); border-radius: 0.75rem; padding: 0.75rem 1rem; transition: all 0.2s; }
+  .quiz-option:hover { border-color: var(--accent); }
+  .quiz-option.selected { border-color: var(--accent); background: rgba(109,179,63,0.08); }
+  .quiz-option.correct { border-color: #22c55e; background: rgba(34,197,94,0.1); }
+  .quiz-option.incorrect { border-color: #ef4444; background: rgba(239,68,68,0.1); }
+
+  #backToTop { position: fixed; bottom: 2rem; right: 2rem; z-index: 999; opacity: 0; transform: translateY(20px); transition: all 0.3s; pointer-events: none; }
+  #backToTop.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+  .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: var(--accent); z-index: 9999; transition: width 0.1s; }
+
+  @media print {
+    .no-print { display: none !important; }
+    .print-only { display: block !important; }
+    body { background: #fff !important; color: #000 !important; }
+  }
+  .print-only { display: none; }
+
+  .hero-gradient {
+    background: linear-gradient(135deg, rgba(109,179,63,0.08) 0%, rgba(52,211,153,0.04) 50%, transparent 100%);
+  }
+  .dark .hero-gradient {
+    background: linear-gradient(135deg, rgba(110,231,183,0.06) 0%, rgba(109,179,63,0.03) 50%, transparent 100%);
+  }
+
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .animate-in { animation: fadeInUp 0.5s ease forwards; }
+
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Progress Bar -->
+<div class="progress-bar no-print" id="progressBar" style="width:0%"></div>
+
+<!-- Back to Top -->
+<button id="backToTop" class="no-print bg-spring-500 dark:bg-emerald-500 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+</button>
+
+<!-- Mobile Nav Toggle -->
+<button id="mobileMenuBtn" class="no-print fixed top-4 left-4 z-50 lg:hidden bg-white dark:bg-ink-800 border border-ink-200 dark:border-ink-700 rounded-lg p-2 shadow-md" onclick="toggleMobileNav()">
+  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+
+<!-- Sidebar Navigation -->
+<aside id="sidebar" class="sidebar no-print fixed left-0 top-0 h-full w-72 bg-white dark:bg-ink-900 border-r border-ink-200 dark:border-ink-800 z-40 overflow-y-auto transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+  <div class="p-6 border-b border-ink-200 dark:border-ink-800">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-spring-500 dark:bg-emerald-500 flex items-center justify-center">
+        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold font-serif leading-tight">Spring Boot</h1>
+        <p class="text-xs text-ink-400 dark:text-ink-500">3.5 Masterclass</p>
+      </div>
+    </div>
+    <!-- Dark Mode Toggle -->
+    <button id="themeToggle" onclick="toggleTheme()" class="mt-4 w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-ink-200 dark:border-ink-700 text-sm hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors">
+      <span id="themeIcon">🌙</span>
+      <span id="themeLabel">Dark Mode</span>
+    </button>
+  </div>
+  <nav class="py-4" id="navContainer"></nav>
+  <div class="p-4 border-t border-ink-200 dark:border-ink-800">
+    <div class="text-xs text-ink-400 dark:text-ink-500">
+      Progress: <span id="navProgress">0</span>/<span id="navTotal">0</span> sections
+    </div>
+    <div class="mt-2 h-1.5 bg-ink-200 dark:bg-ink-700 rounded-full overflow-hidden">
+      <div id="navProgressBar" class="h-full bg-spring-500 dark:bg-emerald-500 rounded-full transition-all duration-500" style="width:0%"></div>
+    </div>
+  </div>
+</aside>
+
+<!-- Overlay for mobile nav -->
+<div id="navOverlay" class="fixed inset-0 bg-black/40 z-30 hidden lg:hidden" onclick="toggleMobileNav()"></div>
+
+<!-- Main Content -->
+<main class="lg:ml-72 min-h-screen">
+
+<!-- Hero Section -->
+<header class="hero-gradient border-b border-ink-200 dark:border-ink-800 px-6 py-16 md:px-12 lg:px-16">
+  <div class="max-w-4xl animate-in">
+    <span class="badge badge-green mb-4 inline-block">Complete Tutorial</span>
+    <h1 class="text-4xl md:text-5xl font-bold font-serif leading-tight mb-4">
+      Building Production-Ready<br>
+      <span class="text-spring-500 dark:text-emerald-400">Spring Boot 3.5</span> Applications
+    </h1>
+    <p class="text-lg text-ink-500 dark:text-ink-400 max-w-2xl leading-relaxed mb-6">
+      A comprehensive, beginner-friendly guide to building secure, cloud-integrated Java applications with Spring Boot, Keycloak, PostGIS, AWS, Temporal, and more.
+    </p>
+    <div class="flex flex-wrap gap-3 text-xs">
+      <span class="badge badge-green">REST API</span>
+      <span class="badge badge-blue">Keycloak OIDC</span>
+      <span class="badge badge-amber">PostGIS</span>
+      <span class="badge badge-green">AWS S3/SQS</span>
+      <span class="badge badge-blue">Temporal</span>
+      <span class="badge badge-amber">Docker</span>
+      <span class="badge badge-red">Terraform</span>
+      <span class="badge badge-green">Liquibase</span>
+    </div>
+  </div>
+</header>
+
+<!-- Tutorial Content -->
+<div class="px-6 py-10 md:px-12 lg:px-16 max-w-4xl" id="tutorialContent">
+
+<!-- ==================== SECTION 1: PROJECT SETUP ==================== -->
+<section id="sec-project-setup" class="tutorial-section mb-12">
+  <div class="flex items-center gap-3 mb-6 cursor-pointer" onclick="toggleSection('project-setup')">
+    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-spring-500/10 dark:bg-emerald-500/10 text-spring-600 dark:text-emerald-400 font-bold font-mono text-sm">01</span>
+    <div class="flex-1">
+      <h2 class="text-2xl font-bold font-serif">Project Setup</h2>
+      <p class="text-sm text-ink-400 dark:text-ink-500">Initialize your Spring Boot project and understand the structure</p>
+    </div>
+    <svg class="w-5 h-5 text-ink-400 transition-transform section-chevron" id="chevron-project-setup" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+  <div class="collapsible-content open" id="content-project-setup">
+    <div class="section-card">
+      <h3 class="text-xl font-semibold font-serif mb-3">What is Spring Boot?</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>Spring Boot</strong> is a Java framework that makes it easy to create stand-alone, production-grade applications. Think of it as a toolkit that handles the boilerplate (repetitive setup code) so you can focus on your business logic — the code that actually does what your app needs to do.
+      </p>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>Why use it?</strong> Without Spring Boot, setting up a Java web application means manually configuring servers, database connections, security, and dozens of other things. Spring Boot does all of this automatically using sensible defaults — a concept called <em>"convention over configuration."</em>
+      </p>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">Step 1: Generate Your Project</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-3">
+        Go to <strong>start.spring.io</strong> (Spring Initializr) and select these options:
+      </p>
+      <div class="tip-box mb-4">
+        <strong>💡 Tip:</strong> Spring Initializr is a web tool that generates a ready-to-code project skeleton. You pick your dependencies (libraries), and it creates a ZIP file with everything configured.
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>Spring Initializr Settings</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>Project:      Maven
+Language:     Java
+Spring Boot:  3.5.13
+Group:        com.example
+Artifact:     myapp
+Packaging:    Jar
+Java:         21
+
+Dependencies:
+  ✓ Spring Web
+  ✓ Spring Data JPA
+  ✓ Spring Security
+  ✓ Spring Boot Actuator
+  ✓ OAuth2 Resource Server
+  ✓ Validation
+  ✓ Lombok
+  ✓ PostgreSQL Driver
+  ✓ Liquibase Migration</pre></div>
+      </div>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">Step 2: Recommended Package Structure</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-3">
+        A well-organized package structure keeps your code clean as the project grows. Here's the recommended layout:
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>Package Structure</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>com.example.myapp/
+├── config/              # Configuration classes
+│   ├── SecurityConfig.java
+│   ├── SwaggerConfig.java
+│   └── AwsConfig.java
+├── controller/          # REST API endpoints
+│   └── ItemController.java
+├── service/             # Business logic
+│   ├── ItemService.java
+│   └── impl/
+│       └── ItemServiceImpl.java
+├── repository/          # Database access
+│   └── ItemRepository.java
+├── model/
+│   ├── entity/          # Database entities
+│   │   └── Item.java
+│   └── dto/             # Data Transfer Objects
+│       ├── ItemRequest.java
+│       └── ItemResponse.java
+├── exception/           # Custom exceptions &amp; handlers
+│   ├── ResourceNotFoundException.java
+│   └── GlobalExceptionHandler.java
+├── validation/          # Custom validators
+├── mapper/              # Entity ↔ DTO mappers
+├── temporal/            # Temporal workflows &amp; workers
+└── MyappApplication.java</pre></div>
+      </div>
+
+      <div class="tip-box mt-4">
+        <strong>💡 Why this structure?</strong> Each package has a single responsibility. Controllers handle HTTP requests, services contain business logic, repositories talk to the database, and DTOs shape data for the API. This separation makes your code testable, maintainable, and easy for other developers to navigate.
+      </div>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">Step 3: pom.xml Dependencies</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-3">
+        The <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">pom.xml</code> file is Maven's configuration file. It lists all the libraries your project uses. Here are the additional dependencies you'll need beyond the Initializr defaults:
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>pom.xml (additional dependencies)</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>&lt;!-- Swagger / OpenAPI --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springdoc&lt;/groupId&gt;
+    &lt;artifactId&gt;springdoc-openapi-starter-webmvc-ui&lt;/artifactId&gt;
+    &lt;version&gt;2.8.0&lt;/version&gt;
+&lt;/dependency&gt;
+
+&lt;!-- AWS SDK v2 --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;software.amazon.awssdk&lt;/groupId&gt;
+    &lt;artifactId&gt;s3&lt;/artifactId&gt;
+    &lt;version&gt;2.29.0&lt;/version&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;software.amazon.awssdk&lt;/groupId&gt;
+    &lt;artifactId&gt;sqs&lt;/artifactId&gt;
+    &lt;version&gt;2.29.0&lt;/version&gt;
+&lt;/dependency&gt;
+
+&lt;!-- Temporal --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;io.temporal&lt;/groupId&gt;
+    &lt;artifactId&gt;temporal-sdk&lt;/artifactId&gt;
+    &lt;version&gt;1.27.0&lt;/version&gt;
+&lt;/dependency&gt;
+
+&lt;!-- Hibernate Spatial (PostGIS) --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.hibernate.orm&lt;/groupId&gt;
+    &lt;artifactId&gt;hibernate-spatial&lt;/artifactId&gt;
+&lt;/dependency&gt;
+
+&lt;!-- MapStruct for DTO mapping --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.mapstruct&lt;/groupId&gt;
+    &lt;artifactId&gt;mapstruct&lt;/artifactId&gt;
+    &lt;version&gt;1.6.3&lt;/version&gt;
+&lt;/dependency&gt;</pre></div>
+      </div>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">Step 4: Application Properties</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span>application.yml</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>spring:
+  application:
+    name: myapp
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/${DB_NAME:myapp}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASS:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Liquibase manages schema
+    properties:
+      hibernate:
+        dialect: org.hibernate.spatial.dialect.postgis.PostgisPG10Dialect
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+server:
+  port: ${SERVER_PORT:8080}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs</pre></div>
+      </div>
+
+      <div class="warn-box mt-4">
+        <strong>⚠️ Common Mistake:</strong> Never hard-code passwords or secrets in your properties files. Use environment variables (shown with <code class="text-sm">${...}</code> syntax) or a secrets manager. We'll cover this more in the Security section.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 2: REST API BASICS ==================== -->
+<section id="sec-rest-api" class="tutorial-section mb-12">
+  <div class="flex items-center gap-3 mb-6 cursor-pointer" onclick="toggleSection('rest-api')">
+    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-spring-500/10 dark:bg-emerald-500/10 text-spring-600 dark:text-emerald-400 font-bold font-mono text-sm">02</span>
+    <div class="flex-1">
+      <h2 class="text-2xl font-bold font-serif">REST API Basics &amp; CRUD</h2>
+      <p class="text-sm text-ink-400 dark:text-ink-500">Build your first API endpoints with Controller → Service → Repository</p>
+    </div>
+    <svg class="w-5 h-5 text-ink-400 transition-transform section-chevron" id="chevron-rest-api" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+  <div class="collapsible-content" id="content-rest-api">
+    <div class="section-card">
+      <h3 class="text-xl font-semibold font-serif mb-3">Understanding REST</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>REST</strong> (Representational State Transfer) is a way to design web APIs. Your API is a set of URLs (called <em>endpoints</em>) that clients (web browsers, mobile apps) can call to read, create, update, or delete data. Each HTTP method has a purpose:
+      </p>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>GET</strong> = Read data &nbsp;|&nbsp; <strong>POST</strong> = Create data &nbsp;|&nbsp; <strong>PUT</strong> = Update data &nbsp;|&nbsp; <strong>DELETE</strong> = Remove data
+      </p>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">Entity (Database Model)</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-3">
+        An <strong>entity</strong> represents a table in your database. Each instance of the class is a row. <strong>Lombok</strong> annotations like <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">@Data</code> automatically generate getters, setters, and toString methods — saving you from writing boilerplate code.
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>Item.java — Entity</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.model.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "items")
+@Data                    // Generates getters, setters, toString, equals, hashCode
+@NoArgsConstructor       // Generates no-argument constructor
+@AllArgsConstructor      // Generates all-argument constructor
+@Builder                 // Enables the Builder pattern (covered later)
+public class Item {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 255)
+    private String name;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(nullable = false)
+    private Double price;
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+}</pre></div>
+      </div>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">DTOs (Data Transfer Objects)</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-3">
+        <strong>DTOs</strong> are simple classes that carry data between your API and the outside world. <strong>Why not just use the entity?</strong> Because entities may contain sensitive fields (like passwords), database-specific annotations, or fields that shouldn't be exposed. DTOs give you control over what goes in and out of your API.
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>ItemRequest.java — DTO for incoming data</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.model.dto;
+
+import jakarta.validation.constraints.*;
+import lombok.Data;
+
+@Data
+public class ItemRequest {
+
+    @NotBlank(message = "Name is required")
+    @Size(max = 255, message = "Name must be under 255 characters")
+    private String name;
+
+    private String description;
+
+    @NotNull(message = "Price is required")
+    @Positive(message = "Price must be positive")
+    private Double price;
+}</pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>ItemResponse.java — DTO for outgoing data</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.model.dto;
+
+import lombok.Builder;
+import lombok.Data;
+import java.time.LocalDateTime;
+
+@Data
+@Builder
+public class ItemResponse {
+    private Long id;
+    private String name;
+    private String description;
+    private Double price;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}</pre></div>
+      </div>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">Repository</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-3">
+        The <strong>repository</strong> is your database access layer. Spring Data JPA gives you CRUD operations for free — just extend the interface and Spring generates the implementation at runtime.
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>ItemRepository.java</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.repository;
+
+import com.example.myapp.model.entity.Item;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface ItemRepository extends JpaRepository&lt;Item, Long&gt; {
+
+    // Spring generates the SQL query from the method name!
+    List&lt;Item&gt; findByNameContainingIgnoreCase(String name);
+
+    List&lt;Item&gt; findByPriceLessThan(Double price);
+}</pre></div>
+      </div>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">Service Layer</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-3">
+        The <strong>service layer</strong> contains your business logic. It sits between the controller and repository. <strong>Why a separate layer?</strong> It keeps your controller thin (just handling HTTP) and makes business logic easy to test independently.
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>ItemService.java</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.service;
+
+import com.example.myapp.model.dto.*;
+import java.util.List;
+
+public interface ItemService {
+    ItemResponse create(ItemRequest request);
+    ItemResponse getById(Long id);
+    List&lt;ItemResponse&gt; getAll();
+    ItemResponse update(Long id, ItemRequest request);
+    void delete(Long id);
+}</pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>ItemServiceImpl.java</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.service.impl;
+
+import com.example.myapp.exception.ResourceNotFoundException;
+import com.example.myapp.model.dto.*;
+import com.example.myapp.model.entity.Item;
+import com.example.myapp.repository.ItemRepository;
+import com.example.myapp.service.ItemService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor  // Lombok generates constructor for final fields
+@Transactional
+public class ItemServiceImpl implements ItemService {
+
+    private final ItemRepository itemRepository;
+
+    @Override
+    public ItemResponse create(ItemRequest request) {
+        Item item = Item.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .price(request.getPrice())
+                .build();
+        Item saved = itemRepository.save(item);
+        return mapToResponse(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ItemResponse getById(Long id) {
+        Item item = itemRepository.findById(id)
+                .orElseThrow(() -&gt; new ResourceNotFoundException(
+                    "Item not found with id: " + id));
+        return mapToResponse(item);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;ItemResponse&gt; getAll() {
+        return itemRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    public ItemResponse update(Long id, ItemRequest request) {
+        Item item = itemRepository.findById(id)
+                .orElseThrow(() -&gt; new ResourceNotFoundException(
+                    "Item not found with id: " + id));
+        item.setName(request.getName());
+        item.setDescription(request.getDescription());
+        item.setPrice(request.getPrice());
+        Item updated = itemRepository.save(item);
+        return mapToResponse(updated);
+    }
+
+    @Override
+    public void delete(Long id) {
+        if (!itemRepository.existsById(id)) {
+            throw new ResourceNotFoundException(
+                "Item not found with id: " + id);
+        }
+        itemRepository.deleteById(id);
+    }
+
+    private ItemResponse mapToResponse(Item item) {
+        return ItemResponse.builder()
+                .id(item.getId())
+                .name(item.getName())
+                .description(item.getDescription())
+                .price(item.getPrice())
+                .createdAt(item.getCreatedAt())
+                .updatedAt(item.getUpdatedAt())
+                .build();
+    }
+}</pre></div>
+      </div>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">Controller</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-3">
+        The <strong>controller</strong> is the entry point for HTTP requests. It defines your API endpoints, calls the service layer, and returns responses. Keep controllers thin — they should only handle HTTP concerns (status codes, request/response mapping).
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>ItemController.java</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.controller;
+
+import com.example.myapp.model.dto.*;
+import com.example.myapp.service.ItemService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/items")
+@RequiredArgsConstructor
+@Tag(name = "Items", description = "Item management endpoints")
+public class ItemController {
+
+    private final ItemService itemService;
+
+    @PostMapping
+    @Operation(summary = "Create a new item")
+    public ResponseEntity&lt;ItemResponse&gt; create(
+            @Valid @RequestBody ItemRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(itemService.create(request));
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get item by ID")
+    public ResponseEntity&lt;ItemResponse&gt; getById(@PathVariable Long id) {
+        return ResponseEntity.ok(itemService.getById(id));
+    }
+
+    @GetMapping
+    @Operation(summary = "Get all items")
+    public ResponseEntity&lt;List&lt;ItemResponse&gt;&gt; getAll() {
+        return ResponseEntity.ok(itemService.getAll());
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update an item")
+    public ResponseEntity&lt;ItemResponse&gt; update(
+            @PathVariable Long id,
+            @Valid @RequestBody ItemRequest request) {
+        return ResponseEntity.ok(itemService.update(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete an item")
+    public ResponseEntity&lt;Void&gt; delete(@PathVariable Long id) {
+        itemService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+}</pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 3: VALIDATION & EXCEPTION HANDLING ==================== -->
+<section id="sec-validation" class="tutorial-section mb-12">
+  <div class="flex items-center gap-3 mb-6 cursor-pointer" onclick="toggleSection('validation')">
+    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-spring-500/10 dark:bg-emerald-500/10 text-spring-600 dark:text-emerald-400 font-bold font-mono text-sm">03</span>
+    <div class="flex-1">
+      <h2 class="text-2xl font-bold font-serif">Validation &amp; Exception Handling</h2>
+      <p class="text-sm text-ink-400 dark:text-ink-500">Validate input and handle errors gracefully</p>
+    </div>
+    <svg class="w-5 h-5 text-ink-400 transition-transform section-chevron" id="chevron-validation" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+  <div class="collapsible-content" id="content-validation">
+    <div class="section-card">
+      <h3 class="text-xl font-semibold font-serif mb-3">Why Validation Matters</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>Never trust user input.</strong> Validation ensures that data meets your requirements before it hits your business logic or database. Spring Boot's <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">@Valid</code> annotation combined with Jakarta Bean Validation annotations makes this easy.
+      </p>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        Common validation annotations: <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">@NotBlank</code> (not empty), <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">@NotNull</code>, <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">@Size</code>, <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">@Email</code>, <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">@Positive</code>, <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">@Pattern</code> (regex match). We already saw these on our DTO — now let's handle what happens when validation fails.
+      </p>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">Global Exception Handler</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-3">
+        Instead of handling exceptions in every controller, a <strong>global exception handler</strong> catches errors from anywhere in your app and returns clean, consistent error responses. This is done with <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">@RestControllerAdvice</code>.
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>GlobalExceptionHandler.java</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
+import java.time.LocalDateTime;
+import java.util.*;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    // Handles validation errors (e.g., @NotBlank fails)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleValidation(
+            MethodArgumentNotValidException ex) {
+        Map&lt;String, String&gt; errors = new LinkedHashMap&lt;&gt;();
+        ex.getBindingResult().getFieldErrors().forEach(err -&gt;
+            errors.put(err.getField(), err.getDefaultMessage()));
+
+        Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", 400);
+        body.put("error", "Validation Failed");
+        body.put("details", errors);
+
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    // Handles "resource not found" errors
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleNotFound(
+            ResourceNotFoundException ex) {
+        Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", 404);
+        body.put("error", "Not Found");
+        body.put("message", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
+    // Catches any unhandled exceptions
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleGeneral(
+            Exception ex) {
+        Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", 500);
+        body.put("error", "Internal Server Error");
+        body.put("message", "An unexpected error occurred");
+        // Don't expose stack traces in production!
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(body);
+    }
+}</pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>ResourceNotFoundException.java</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.exception;
+
+public class ResourceNotFoundException extends RuntimeException {
+    public ResourceNotFoundException(String message) {
+        super(message);
+    }
+}</pre></div>
+      </div>
+
+      <div class="warn-box mt-4">
+        <strong>⚠️ Common Mistake:</strong> Never expose stack traces or internal error details in production API responses. Attackers can use this information to find vulnerabilities. Always log the full error server-side but return a generic message to clients.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 4: DATABASE SETUP ==================== -->
+<section id="sec-database" class="tutorial-section mb-12">
+  <div class="flex items-center gap-3 mb-6 cursor-pointer" onclick="toggleSection('database')">
+    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-spring-500/10 dark:bg-emerald-500/10 text-spring-600 dark:text-emerald-400 font-bold font-mono text-sm">04</span>
+    <div class="flex-1">
+      <h2 class="text-2xl font-bold font-serif">Database with Liquibase &amp; PostGIS</h2>
+      <p class="text-sm text-ink-400 dark:text-ink-500">Manage database migrations and add geographic support</p>
+    </div>
+    <svg class="w-5 h-5 text-ink-400 transition-transform section-chevron" id="chevron-database" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+  <div class="collapsible-content" id="content-database">
+    <div class="section-card">
+      <h3 class="text-xl font-semibold font-serif mb-3">What is Liquibase?</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>Liquibase</strong> is a database migration tool. It tracks changes to your database schema (tables, columns, indexes) using versioned "changelog" files. Think of it as <em>Git for your database</em> — every change is recorded, ordered, and reproducible.
+      </p>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>Why not let Hibernate auto-create tables?</strong> Hibernate's <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">ddl-auto: update</code> can create and alter tables, but it can't rename columns, migrate data, or guarantee consistency across environments. Liquibase gives you full control and an audit trail.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>db/changelog/db.changelog-master.yaml</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>databaseChangeLog:
+  - include:
+      file: db/changelog/001-create-items-table.yaml
+  - include:
+      file: db/changelog/002-add-postgis-support.yaml</pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>db/changelog/001-create-items-table.yaml</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>databaseChangeLog:
+  - changeSet:
+      id: 001-create-items
+      author: developer
+      changes:
+        - createTable:
+            tableName: items
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: price
+                  type: DOUBLE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP</pre></div>
+      </div>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">PostGIS: Geographic Data</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>PostGIS</strong> is a PostgreSQL extension that adds support for geographic objects — points, lines, polygons, etc. Combined with <strong>Hibernate Spatial</strong>, you can store locations, areas, and routes directly in your database and query them spatially (e.g., "find all items within 5 km of this point").
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>db/changelog/002-add-postgis-support.yaml</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>databaseChangeLog:
+  - changeSet:
+      id: 002-enable-postgis
+      author: developer
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS postgis;
+  - changeSet:
+      id: 002-add-location-columns
+      author: developer
+      changes:
+        - addColumn:
+            tableName: items
+            columns:
+              - column:
+                  name: location
+                  type: GEOMETRY(Point, 4326)
+              - column:
+                  name: boundary
+                  type: GEOMETRY(Polygon, 4326)
+        - createIndex:
+            tableName: items
+            indexName: idx_items_location
+            columns:
+              - column:
+                  name: location
+            # Spatial index for fast geographic queries
+            # Uses GiST (Generalized Search Tree) index type</pre></div>
+      </div>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">PostGIS Entity Example</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span>GeoItem.java — Entity with GIS columns</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.model.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
+
+@Entity
+@Table(name = "items")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class GeoItem {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    // A geographic point (latitude/longitude)
+    // SRID 4326 = WGS 84, the standard GPS coordinate system
+    @Column(columnDefinition = "GEOMETRY(Point, 4326)")
+    private Point location;
+
+    // A geographic polygon (area boundary)
+    @Column(columnDefinition = "GEOMETRY(Polygon, 4326)")
+    private Polygon boundary;
+}</pre></div>
+      </div>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">GIS API for OpenLayers</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-3">
+        <strong>OpenLayers</strong> is a JavaScript library for interactive maps. It typically consumes GeoJSON data. Here's how to return data in a format OpenLayers can display directly:
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>GeoJSON response for OpenLayers</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>// Controller endpoint returning GeoJSON
+@GetMapping("/api/v1/items/geojson")
+public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; getGeoJson() {
+    List&lt;GeoItem&gt; items = geoItemRepository.findAll();
+
+    List&lt;Map&lt;String, Object&gt;&gt; features = items.stream()
+        .filter(i -&gt; i.getLocation() != null)
+        .map(item -&gt; Map.of(
+            "type", "Feature",
+            "geometry", Map.of(
+                "type", "Point",
+                "coordinates", new double[]{
+                    item.getLocation().getX(),  // longitude
+                    item.getLocation().getY()   // latitude
+                }
+            ),
+            "properties", Map.of(
+                "id", item.getId(),
+                "name", item.getName()
+            )
+        )).toList();
+
+    Map&lt;String, Object&gt; geoJson = Map.of(
+        "type", "FeatureCollection",
+        "features", features
+    );
+    return ResponseEntity.ok(geoJson);
+}
+
+// OpenLayers usage (JavaScript on frontend):
+// const source = new ol.source.Vector({
+//   url: '/api/v1/items/geojson',
+//   format: new ol.format.GeoJSON()
+// });</pre></div>
+      </div>
+
+      <div class="tip-box">
+        <strong>💡 SRID 4326 Explained:</strong> SRID (Spatial Reference System Identifier) 4326 refers to WGS 84, the coordinate system used by GPS. Coordinates are in (longitude, latitude) format. OpenLayers uses this same system by default, making integration seamless.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 5: SECURITY ==================== -->
+<section id="sec-security" class="tutorial-section mb-12">
+  <div class="flex items-center gap-3 mb-6 cursor-pointer" onclick="toggleSection('security')">
+    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-spring-500/10 dark:bg-emerald-500/10 text-spring-600 dark:text-emerald-400 font-bold font-mono text-sm">05</span>
+    <div class="flex-1">
+      <h2 class="text-2xl font-bold font-serif">Security: OIDC, Keycloak &amp; Roles</h2>
+      <p class="text-sm text-ink-400 dark:text-ink-500">Secure your API with OAuth2 and role-based access control</p>
+    </div>
+    <svg class="w-5 h-5 text-ink-400 transition-transform section-chevron" id="chevron-security" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+  <div class="collapsible-content" id="content-security">
+    <div class="section-card">
+      <h3 class="text-xl font-semibold font-serif mb-3">Understanding OAuth2 &amp; OIDC</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>OAuth2</strong> is an authorization framework — it lets users grant limited access to their resources without sharing passwords. <strong>OIDC</strong> (OpenID Connect) adds an identity layer on top of OAuth2, so you can also verify <em>who</em> the user is.
+      </p>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>Keycloak</strong> is an open-source Identity Provider (IdP) that handles user registration, login, password resets, and token issuance. Your Spring Boot app becomes a <em>Resource Server</em> that validates tokens issued by Keycloak.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>application-secure.yml — Keycloak config</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URL:http://localhost:8180}/realms/myapp
+          jwk-set-uri: ${KEYCLOAK_URL:http://localhost:8180}/realms/myapp/protocol/openid-connect/certs
+
+# Custom property for role claim extraction
+app:
+  security:
+    roles-claim: realm_access.roles</pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>SecurityConfig.java — with role-based access</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.config;
+
+import org.springframework.context.annotation.*;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity  // Enables @PreAuthorize on methods
+@Profile("!nosecurity")  // This config is DISABLED when 'nosecurity' profile is active
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -&gt; csrf.disable())  // Disable CSRF for stateless APIs
+            .sessionManagement(s -&gt; s.sessionCreationPolicy(
+                SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -&gt; auth
+                // Public endpoints
+                .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                // Role-restricted endpoints
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                // Everything else requires authentication
+                .anyRequest().authenticated()
+            )
+            .oauth2ResourceServer(oauth2 -&gt; oauth2
+                .jwt(jwt -&gt; jwt
+                    .jwtAuthenticationConverter(jwtAuthConverter())
+                )
+            );
+        return http.build();
+    }
+
+    // Extracts roles from Keycloak JWT token
+    private JwtAuthenticationConverter jwtAuthConverter() {
+        JwtGrantedAuthoritiesConverter grantedAuthorities =
+            new JwtGrantedAuthoritiesConverter();
+        grantedAuthorities.setAuthorityPrefix("ROLE_");
+        grantedAuthorities.setAuthoritiesClaimName(
+            "realm_access.roles");
+
+        JwtAuthenticationConverter converter =
+            new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(grantedAuthorities);
+        return converter;
+    }
+}</pre></div>
+      </div>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">Role-Based Access on Methods</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span>Using @PreAuthorize for role checks</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>import org.springframework.security.access.prepost.PreAuthorize;
+
+@RestController
+@RequestMapping("/api/v1/admin")
+public class AdminController {
+
+    @GetMapping("/users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity&lt;List&lt;UserResponse&gt;&gt; getAllUsers() {
+        // Only users with ADMIN role can access this
+        return ResponseEntity.ok(userService.getAll());
+    }
+
+    @DeleteMapping("/items/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity&lt;Void&gt; deleteItem(@PathVariable Long id) {
+        // ADMIN or MANAGER can delete
+        itemService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+}</pre></div>
+      </div>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">Disable Security for Local Development</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-3">
+        During local development, you often want to test your API without dealing with tokens. The <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">nosecurity</code> profile disables all security:
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>NoSecurityConfig.java</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>@Configuration
+@EnableWebSecurity
+@Profile("nosecurity")  // Only active with: SPRING_PROFILES_ACTIVE=nosecurity
+public class NoSecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -&gt; csrf.disable())
+            .authorizeHttpRequests(auth -&gt; auth
+                .anyRequest().permitAll()  // Allow everything
+            );
+        return http.build();
+    }
+}
+
+// Run with: java -jar myapp.jar --spring.profiles.active=nosecurity
+// Or set env: SPRING_PROFILES_ACTIVE=nosecurity</pre></div>
+      </div>
+
+      <div class="warn-box">
+        <strong>⚠️ Important:</strong> NEVER deploy the <code class="text-sm">nosecurity</code> profile to production. Use environment variables to control which profile is active in each environment.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 6: STUB MODE ==================== -->
+<section id="sec-stubs" class="tutorial-section mb-12">
+  <div class="flex items-center gap-3 mb-6 cursor-pointer" onclick="toggleSection('stubs')">
+    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-spring-500/10 dark:bg-emerald-500/10 text-spring-600 dark:text-emerald-400 font-bold font-mono text-sm">06</span>
+    <div class="flex-1">
+      <h2 class="text-2xl font-bold font-serif">Stub Mode for Testing</h2>
+      <p class="text-sm text-ink-400 dark:text-ink-500">Return static responses for frontend development</p>
+    </div>
+    <svg class="w-5 h-5 text-ink-400 transition-transform section-chevron" id="chevron-stubs" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+  <div class="collapsible-content" id="content-stubs">
+    <div class="section-card">
+      <h3 class="text-xl font-semibold font-serif mb-3">Why Stub Mode?</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        When frontend developers are building the UI, they need predictable API responses without a real database. A <strong>stub service</strong> returns hard-coded (static) data so the frontend can be developed and tested independently. This is especially useful when the backend is still being built.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>ItemServiceStub.java</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.service.impl;
+
+import com.example.myapp.model.dto.*;
+import com.example.myapp.service.ItemService;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Service
+@Profile("stub")  // Only active with: SPRING_PROFILES_ACTIVE=stub
+public class ItemServiceStub implements ItemService {
+
+    private static final List&lt;ItemResponse&gt; ITEMS = List.of(
+        ItemResponse.builder()
+            .id(1L).name("Sample Widget")
+            .description("A test item for frontend development")
+            .price(29.99).createdAt(LocalDateTime.now()).build(),
+        ItemResponse.builder()
+            .id(2L).name("Demo Gadget")
+            .description("Another test item")
+            .price(49.99).createdAt(LocalDateTime.now()).build()
+    );
+
+    @Override
+    public ItemResponse create(ItemRequest request) {
+        return ItemResponse.builder()
+            .id(99L).name(request.getName())
+            .description(request.getDescription())
+            .price(request.getPrice())
+            .createdAt(LocalDateTime.now()).build();
+    }
+
+    @Override
+    public ItemResponse getById(Long id) { return ITEMS.get(0); }
+
+    @Override
+    public List&lt;ItemResponse&gt; getAll() { return ITEMS; }
+
+    @Override
+    public ItemResponse update(Long id, ItemRequest request) {
+        return ItemResponse.builder()
+            .id(id).name(request.getName())
+            .description(request.getDescription())
+            .price(request.getPrice())
+            .updatedAt(LocalDateTime.now()).build();
+    }
+
+    @Override
+    public void delete(Long id) {
+        // No-op in stub mode
+    }
+}
+
+// Usage:
+// SPRING_PROFILES_ACTIVE=stub,nosecurity ./mvnw spring-boot:run
+// This gives you: no security + fake data = perfect for frontend dev</pre></div>
+      </div>
+
+      <div class="tip-box">
+        <strong>💡 How it works:</strong> Spring's <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">@Profile</code> annotation means this class only gets created when the "stub" profile is active. The real <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">ItemServiceImpl</code> (which uses the database) has no profile annotation or a different one, so only one is active at a time. Spring's dependency injection picks the right one automatically.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 7: AWS INTEGRATIONS ==================== -->
+<section id="sec-aws" class="tutorial-section mb-12">
+  <div class="flex items-center gap-3 mb-6 cursor-pointer" onclick="toggleSection('aws')">
+    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-spring-500/10 dark:bg-emerald-500/10 text-spring-600 dark:text-emerald-400 font-bold font-mono text-sm">07</span>
+    <div class="flex-1">
+      <h2 class="text-2xl font-bold font-serif">AWS Integration: S3 &amp; SQS</h2>
+      <p class="text-sm text-ink-400 dark:text-ink-500">File storage and message queuing with AWS</p>
+    </div>
+    <svg class="w-5 h-5 text-ink-400 transition-transform section-chevron" id="chevron-aws" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+  <div class="collapsible-content" id="content-aws">
+    <div class="section-card">
+      <h3 class="text-xl font-semibold font-serif mb-3">S3: File Storage</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>Amazon S3</strong> (Simple Storage Service) is cloud file storage. Use it for user uploads, images, documents, backups — anything you don't want on your server's disk. <strong>SQS</strong> (Simple Queue Service) is a message queue for async communication between services.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>AwsConfig.java</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.*;
+import software.amazon.awssdk.auth.credentials.*;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.sqs.SqsClient;
+
+@Configuration
+public class AwsConfig {
+
+    @Value("${aws.region:us-east-1}")
+    private String region;
+
+    @Bean
+    public S3Client s3Client() {
+        return S3Client.builder()
+            .region(Region.of(region))
+            // Uses default credential chain:
+            // env vars → system props → IAM role → profile
+            .credentialsProvider(
+                DefaultCredentialsProvider.create())
+            .build();
+    }
+
+    @Bean
+    public SqsClient sqsClient() {
+        return SqsClient.builder()
+            .region(Region.of(region))
+            .credentialsProvider(
+                DefaultCredentialsProvider.create())
+            .build();
+    }
+}</pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>S3Service.java — File upload/download</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>@Service
+@RequiredArgsConstructor
+public class S3Service {
+
+    private final S3Client s3Client;
+
+    @Value("${aws.s3.bucket}")
+    private String bucket;
+
+    public String uploadFile(String key, byte[] content,
+                             String contentType) {
+        s3Client.putObject(
+            PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .contentType(contentType)
+                .build(),
+            RequestBody.fromBytes(content)
+        );
+        return String.format("https://%s.s3.amazonaws.com/%s",
+                             bucket, key);
+    }
+
+    public byte[] downloadFile(String key) {
+        ResponseBytes&lt;GetObjectResponse&gt; response =
+            s3Client.getObjectAsBytes(
+                GetObjectRequest.builder()
+                    .bucket(bucket).key(key).build());
+        return response.asByteArray();
+    }
+}</pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>SqsService.java — Send/receive messages</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>@Service
+@RequiredArgsConstructor
+@Slf4j  // Lombok annotation for logging
+public class SqsService {
+
+    private final SqsClient sqsClient;
+
+    @Value("${aws.sqs.queue-url}")
+    private String queueUrl;
+
+    public void sendMessage(String messageBody) {
+        sqsClient.sendMessage(
+            SendMessageRequest.builder()
+                .queueUrl(queueUrl)
+                .messageBody(messageBody)
+                .build()
+        );
+        log.info("Message sent to SQS: {}", messageBody);
+    }
+
+    public List&lt;Message&gt; receiveMessages(int maxMessages) {
+        ReceiveMessageResponse response =
+            sqsClient.receiveMessage(
+                ReceiveMessageRequest.builder()
+                    .queueUrl(queueUrl)
+                    .maxNumberOfMessages(maxMessages)
+                    .waitTimeSeconds(10)  // Long polling
+                    .build()
+            );
+        return response.messages();
+    }
+}</pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 8: TEMPORAL ==================== -->
+<section id="sec-temporal" class="tutorial-section mb-12">
+  <div class="flex items-center gap-3 mb-6 cursor-pointer" onclick="toggleSection('temporal')">
+    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-spring-500/10 dark:bg-emerald-500/10 text-spring-600 dark:text-emerald-400 font-bold font-mono text-sm">08</span>
+    <div class="flex-1">
+      <h2 class="text-2xl font-bold font-serif">Temporal.io Workflows</h2>
+      <p class="text-sm text-ink-400 dark:text-ink-500">Durable, reliable workflow orchestration</p>
+    </div>
+    <svg class="w-5 h-5 text-ink-400 transition-transform section-chevron" id="chevron-temporal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+  <div class="collapsible-content" id="content-temporal">
+    <div class="section-card">
+      <h3 class="text-xl font-semibold font-serif mb-3">What is Temporal?</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>Temporal</strong> is a workflow engine. It runs long-running, reliable processes that survive crashes, restarts, and network failures. Think of it as a "never-forget" task runner. Use it for: order processing, data pipelines, scheduled jobs, multi-step approval workflows, and anything that must complete even if your server restarts.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>OrderWorkflow.java — Workflow interface</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.temporal;
+
+import io.temporal.workflow.*;
+
+@WorkflowInterface
+public interface OrderWorkflow {
+
+    @WorkflowMethod
+    String processOrder(String orderId);
+}
+
+// Activity interface — the actual work steps
+@ActivityInterface
+public interface OrderActivities {
+
+    String validateOrder(String orderId);
+    String chargePayment(String orderId);
+    String shipOrder(String orderId);
+    void sendConfirmation(String orderId);
+}</pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>OrderWorkflowImpl.java — Workflow implementation</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>public class OrderWorkflowImpl implements OrderWorkflow {
+
+    private final OrderActivities activities =
+        Workflow.newActivityStub(
+            OrderActivities.class,
+            ActivityOptions.newBuilder()
+                .setStartToCloseTimeout(Duration.ofMinutes(5))
+                .setRetryOptions(RetryOptions.newBuilder()
+                    .setMaximumAttempts(3)
+                    .build())
+                .build()
+        );
+
+    @Override
+    public String processOrder(String orderId) {
+        // Each step is durable — if the server crashes
+        // between steps, Temporal resumes from where it left off
+        String validation = activities.validateOrder(orderId);
+        String payment = activities.chargePayment(orderId);
+        String shipping = activities.shipOrder(orderId);
+        activities.sendConfirmation(orderId);
+        return "Order " + orderId + " completed!";
+    }
+}</pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>TemporalConfig.java — Worker setup</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>@Configuration
+public class TemporalConfig {
+
+    @Value("${temporal.server:localhost:7233}")
+    private String temporalServer;
+
+    @Bean
+    public WorkflowClient workflowClient() {
+        WorkflowServiceStubs service = WorkflowServiceStubs.newServiceStubs(
+            WorkflowServiceStubsOptions.newBuilder()
+                .setTarget(temporalServer)
+                .build()
+        );
+        return WorkflowClient.newInstance(service);
+    }
+
+    @Bean
+    public WorkerFactory workerFactory(WorkflowClient client) {
+        WorkerFactory factory = WorkerFactory.newInstance(client);
+        Worker worker = factory.newWorker("ORDER_TASK_QUEUE");
+        worker.registerWorkflowImplementationTypes(
+            OrderWorkflowImpl.class);
+        worker.registerActivitiesImplementations(
+            new OrderActivitiesImpl());
+        factory.start();
+        return factory;
+    }
+}</pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 9: SWAGGER ==================== -->
+<section id="sec-swagger" class="tutorial-section mb-12">
+  <div class="flex items-center gap-3 mb-6 cursor-pointer" onclick="toggleSection('swagger')">
+    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-spring-500/10 dark:bg-emerald-500/10 text-spring-600 dark:text-emerald-400 font-bold font-mono text-sm">09</span>
+    <div class="flex-1">
+      <h2 class="text-2xl font-bold font-serif">Swagger / OpenAPI Documentation</h2>
+      <p class="text-sm text-ink-400 dark:text-ink-500">Auto-generate interactive API docs</p>
+    </div>
+    <svg class="w-5 h-5 text-ink-400 transition-transform section-chevron" id="chevron-swagger" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+  <div class="collapsible-content" id="content-swagger">
+    <div class="section-card">
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>Swagger</strong> (now OpenAPI) automatically generates interactive documentation for your API. Developers can see every endpoint, test them live, and understand request/response formats — all from a web page.
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>SwaggerConfig.java</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.config;
+
+import io.swagger.v3.oas.models.*;
+import io.swagger.v3.oas.models.info.*;
+import io.swagger.v3.oas.models.security.*;
+import org.springframework.context.annotation.*;
+
+@Configuration
+public class SwaggerConfig {
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+            .info(new Info()
+                .title("MyApp API")
+                .version("1.0.0")
+                .description("Spring Boot REST API with PostGIS")
+                .contact(new Contact()
+                    .name("Dev Team")
+                    .email("dev@example.com")))
+            .addSecurityItem(new SecurityRequirement()
+                .addList("Bearer Auth"))
+            .components(new Components()
+                .addSecuritySchemes("Bearer Auth",
+                    new SecurityScheme()
+                        .type(SecurityScheme.Type.HTTP)
+                        .scheme("bearer")
+                        .bearerFormat("JWT")
+                        .description("Paste your Keycloak JWT token")
+                ));
+    }
+}
+
+// Access at: http://localhost:8080/swagger-ui.html</pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 10: TESTING ==================== -->
+<section id="sec-testing" class="tutorial-section mb-12">
+  <div class="flex items-center gap-3 mb-6 cursor-pointer" onclick="toggleSection('testing')">
+    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-spring-500/10 dark:bg-emerald-500/10 text-spring-600 dark:text-emerald-400 font-bold font-mono text-sm">10</span>
+    <div class="flex-1">
+      <h2 class="text-2xl font-bold font-serif">Testing with JUnit &amp; Mockito</h2>
+      <p class="text-sm text-ink-400 dark:text-ink-500">Write reliable unit tests for your application</p>
+    </div>
+    <svg class="w-5 h-5 text-ink-400 transition-transform section-chevron" id="chevron-testing" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+  <div class="collapsible-content" id="content-testing">
+    <div class="section-card">
+      <h3 class="text-xl font-semibold font-serif mb-3">Why Test?</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        Tests are your safety net. They catch bugs before users do, give you confidence to refactor, and serve as living documentation of how your code should behave. <strong>JUnit</strong> is the test framework; <strong>Mockito</strong> creates fake ("mock") objects so you can test one layer in isolation.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>ItemServiceImplTest.java</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>package com.example.myapp.service.impl;
+
+import com.example.myapp.exception.ResourceNotFoundException;
+import com.example.myapp.model.dto.*;
+import com.example.myapp.model.entity.Item;
+import com.example.myapp.repository.ItemRepository;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.Optional;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)  // Enable Mockito
+class ItemServiceImplTest {
+
+    @Mock  // Create a fake repository
+    private ItemRepository itemRepository;
+
+    @InjectMocks  // Inject the mock into the real service
+    private ItemServiceImpl itemService;
+
+    private Item sampleItem;
+    private ItemRequest sampleRequest;
+
+    @BeforeEach
+    void setUp() {
+        sampleItem = Item.builder()
+            .id(1L).name("Test Item")
+            .description("A test").price(10.0).build();
+
+        sampleRequest = new ItemRequest();
+        sampleRequest.setName("Test Item");
+        sampleRequest.setDescription("A test");
+        sampleRequest.setPrice(10.0);
+    }
+
+    @Test
+    @DisplayName("Should create item successfully")
+    void createItem_Success() {
+        // Arrange: tell the mock what to return
+        when(itemRepository.save(any(Item.class)))
+            .thenReturn(sampleItem);
+
+        // Act: call the method under test
+        ItemResponse result = itemService.create(sampleRequest);
+
+        // Assert: verify the result
+        assertThat(result.getName()).isEqualTo("Test Item");
+        assertThat(result.getPrice()).isEqualTo(10.0);
+        verify(itemRepository, times(1)).save(any(Item.class));
+    }
+
+    @Test
+    @DisplayName("Should throw when item not found")
+    void getById_NotFound_ThrowsException() {
+        when(itemRepository.findById(99L))
+            .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -&gt; itemService.getById(99L))
+            .isInstanceOf(ResourceNotFoundException.class)
+            .hasMessageContaining("not found");
+    }
+
+    @Test
+    @DisplayName("Should return item when found")
+    void getById_Found_ReturnsItem() {
+        when(itemRepository.findById(1L))
+            .thenReturn(Optional.of(sampleItem));
+
+        ItemResponse result = itemService.getById(1L);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
+    }
+}</pre></div>
+      </div>
+
+      <div class="tip-box">
+        <strong>💡 Testing Best Practices:</strong> Follow the <strong>AAA pattern</strong> — Arrange (set up data), Act (call the method), Assert (check the result). Name tests descriptively. Test both happy paths and error cases. Aim for 80%+ code coverage on business logic.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 11: DOCKER & CI/CD ==================== -->
+<section id="sec-docker" class="tutorial-section mb-12">
+  <div class="flex items-center gap-3 mb-6 cursor-pointer" onclick="toggleSection('docker')">
+    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-spring-500/10 dark:bg-emerald-500/10 text-spring-600 dark:text-emerald-400 font-bold font-mono text-sm">11</span>
+    <div class="flex-1">
+      <h2 class="text-2xl font-bold font-serif">Docker, CI/CD &amp; Deployment</h2>
+      <p class="text-sm text-ink-400 dark:text-ink-500">Containerize, automate, and deploy your application</p>
+    </div>
+    <svg class="w-5 h-5 text-ink-400 transition-transform section-chevron" id="chevron-docker" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+  <div class="collapsible-content" id="content-docker">
+    <div class="section-card">
+      <h3 class="text-xl font-semibold font-serif mb-3">Docker: What &amp; Why</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>Docker</strong> packages your application and its dependencies into a <em>container</em> — a lightweight, isolated environment that runs the same everywhere. No more "it works on my machine" problems.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>Dockerfile — Multi-stage build</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre># Stage 1: Build the application
+FROM eclipse-temurin:21-jdk AS builder
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+COPY .mvn ./.mvn
+COPY mvnw .
+RUN chmod +x mvnw && ./mvnw package -DskipTests
+
+# Stage 2: Run the application (smaller image)
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
+
+# Don't run as root in production
+RUN addgroup --system appgroup && \
+    adduser --system appuser --ingroup appgroup
+USER appuser
+
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]</pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span>docker-compose.yml — Local dev environment</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+      - DB_HOST=postgres
+      - DB_NAME=myapp
+      - DB_USER=postgres
+      - DB_PASS=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgis/postgis:16-3.4
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: myapp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: start-dev
+    ports:
+      - "8180:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    ports:
+      - "7233:7233"
+
+volumes:
+  pgdata:</pre></div>
+      </div>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">CI/CD Pipeline Concepts</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>CI/CD</strong> (Continuous Integration / Continuous Deployment) automates your build, test, and deploy process. Every code push triggers a pipeline that builds, tests, and optionally deploys your application.
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>.github/workflows/ci.yml — GitHub Actions example</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>name: CI/CD Pipeline
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build and Test
+        run: ./mvnw verify
+
+      - name: Build Docker Image
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker build -t myapp:${{ github.sha }} .
+          docker tag myapp:${{ github.sha }} myapp:latest</pre></div>
+      </div>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">Terraform: Infrastructure as Code</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        <strong>Terraform</strong> lets you define your cloud infrastructure (servers, databases, networking) as code. Instead of clicking through the AWS console, you write configuration files that are versioned, reviewable, and reproducible.
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>main.tf — Simplified AWS ECS deployment</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre># Terraform configuration for deploying to AWS ECS
+provider "aws" {
+  region = var.aws_region
+}
+
+# RDS PostgreSQL with PostGIS
+resource "aws_db_instance" "postgres" {
+  engine         = "postgres"
+  engine_version = "16.4"
+  instance_class = "db.t3.micro"
+  db_name        = "myapp"
+  username       = var.db_username
+  password       = var.db_password  # Use secrets manager!
+
+  # Enable PostGIS via parameter group
+  parameter_group_name = aws_db_parameter_group.postgis.name
+}
+
+# S3 Bucket for file storage
+resource "aws_s3_bucket" "uploads" {
+  bucket = "${var.project_name}-uploads"
+}
+
+# SQS Queue
+resource "aws_sqs_queue" "orders" {
+  name                       = "${var.project_name}-orders"
+  visibility_timeout_seconds = 300
+}
+
+# ECS Fargate service (serverless containers)
+resource "aws_ecs_service" "app" {
+  name            = "${var.project_name}-service"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.app.arn
+  desired_count   = 2
+  launch_type     = "FARGATE"
+}</pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 12: DESIGN PATTERNS ==================== -->
+<section id="sec-patterns" class="tutorial-section mb-12">
+  <div class="flex items-center gap-3 mb-6 cursor-pointer" onclick="toggleSection('patterns')">
+    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-spring-500/10 dark:bg-emerald-500/10 text-spring-600 dark:text-emerald-400 font-bold font-mono text-sm">12</span>
+    <div class="flex-1">
+      <h2 class="text-2xl font-bold font-serif">Design Patterns &amp; Best Practices</h2>
+      <p class="text-sm text-ink-400 dark:text-ink-500">Write clean, maintainable, professional code</p>
+    </div>
+    <svg class="w-5 h-5 text-ink-400 transition-transform section-chevron" id="chevron-patterns" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+  <div class="collapsible-content" id="content-patterns">
+    <div class="section-card">
+      <h3 class="text-xl font-semibold font-serif mb-3">Design Patterns Explained Simply</h3>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-6">
+        Design patterns are <em>proven solutions</em> to common programming problems. They're like recipes — once you know them, you can apply them over and over. Here are the most important ones for Spring Boot:
+      </p>
+
+      <h4 class="text-lg font-semibold mb-2">1. Controller → Service → Repository</h4>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        This is the <strong>layered architecture</strong> we've been using throughout this tutorial. Each layer has one job: Controllers handle HTTP, Services handle business logic, Repositories handle data. This separation makes your code testable and maintainable.
+      </p>
+
+      <h4 class="text-lg font-semibold mb-2">2. Dependency Injection (DI)</h4>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        Instead of creating objects yourself (<code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">new ItemService()</code>), Spring <em>injects</em> them for you. This is why we use <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">@RequiredArgsConstructor</code> and <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">final</code> fields. DI makes testing easy (inject mocks instead of real objects) and reduces coupling between classes.
+      </p>
+
+      <h4 class="text-lg font-semibold mb-2">3. Builder Pattern</h4>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-2">
+        Creates objects step-by-step instead of using massive constructors. Lombok's <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">@Builder</code> generates this for you:
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>Builder Pattern example</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>// Without builder — hard to read, easy to mix up parameters
+Item item = new Item(null, "Widget", "Desc", 29.99, null, null);
+
+// With builder — clear and readable
+Item item = Item.builder()
+    .name("Widget")
+    .description("Desc")
+    .price(29.99)
+    .build();</pre></div>
+      </div>
+
+      <h4 class="text-lg font-semibold mb-2 mt-6">4. Strategy Pattern</h4>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-2">
+        Defines a family of interchangeable algorithms. Our stub vs real service is an example — same interface, different implementations swapped based on configuration:
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>Strategy Pattern — Payment example</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>// Strategy interface
+public interface PaymentStrategy {
+    PaymentResult process(PaymentRequest request);
+}
+
+@Service @Profile("!test")
+public class StripePaymentStrategy implements PaymentStrategy {
+    public PaymentResult process(PaymentRequest req) {
+        // Real Stripe API call
+    }
+}
+
+@Service @Profile("test")
+public class MockPaymentStrategy implements PaymentStrategy {
+    public PaymentResult process(PaymentRequest req) {
+        return PaymentResult.success(); // Always succeeds
+    }
+}
+
+// Spring injects the right one based on active profile!</pre></div>
+      </div>
+
+      <h4 class="text-lg font-semibold mb-2 mt-6">5. Factory Pattern</h4>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-2">
+        Creates objects without exposing the creation logic. Useful when the type of object depends on input:
+      </p>
+      <div class="code-block">
+        <div class="code-header">
+          <span>Factory Pattern</span>
+          <button onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre>@Component
+public class NotificationFactory {
+
+    public NotificationSender create(String type) {
+        return switch (type) {
+            case "email" -> new EmailSender();
+            case "sms"   -> new SmsSender();
+            case "push"  -> new PushSender();
+            default -> throw new IllegalArgumentException(
+                "Unknown notification type: " + type);
+        };
+    }
+}</pre></div>
+      </div>
+
+      <h4 class="text-lg font-semibold mb-2 mt-6">6. Adapter Pattern</h4>
+      <p class="text-ink-600 dark:text-ink-300 leading-relaxed mb-4">
+        Makes incompatible interfaces work together. Common when integrating with external APIs — you wrap their response format into your own DTO format, shielding your code from external changes.
+      </p>
+
+      <h3 class="text-xl font-semibold font-serif mb-3 mt-8">Best Practices Checklist</h3>
+      <div class="space-y-3 text-ink-600 dark:text-ink-300">
+        <p>✅ <strong>DTO ↔ Entity separation:</strong> Never expose entities directly in your API</p>
+        <p>✅ <strong>Service layer:</strong> Keep controllers thin, put logic in services</p>
+        <p>✅ <strong>Validation:</strong> Validate all input at the API boundary</p>
+        <p>✅ <strong>Exception handling:</strong> Use global exception handlers, never expose internals</p>
+        <p>✅ <strong>Secrets:</strong> Use environment variables or a secrets manager, never hard-code</p>
+        <p>✅ <strong>Logging:</strong> Use SLF4J/Lombok's <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">@Slf4j</code>, log at appropriate levels</p>
+        <p>✅ <strong>Profiles:</strong> Use Spring profiles for environment-specific config</p>
+        <p>✅ <strong>API versioning:</strong> Prefix endpoints with <code class="text-sm bg-ink-100 dark:bg-ink-800 px-1.5 py-0.5 rounded">/api/v1/</code></p>
+        <p>✅ <strong>Testing:</strong> Write unit tests for services, integration tests for controllers</p>
+        <p>✅ <strong>Documentation:</strong> Use Swagger annotations on every endpoint</p>
+        <p>✅ <strong>Clean code:</strong> Small methods, descriptive names, single responsibility</p>
+        <p>✅ <strong>Database:</strong> Use Liquibase for migrations, never rely on Hibernate auto-DDL in production</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== QUIZ SECTION ==================== -->
+<section id="sec-quiz" class="tutorial-section mb-12">
+  <div class="flex items-center gap-3 mb-6 cursor-pointer" onclick="toggleSection('quiz')">
+    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-spring-500/10 dark:bg-emerald-500/10 text-spring-600 dark:text-emerald-400 font-bold font-mono text-sm">🎯</span>
+    <div class="flex-1">
+      <h2 class="text-2xl font-bold font-serif">Knowledge Check Quiz</h2>
+      <p class="text-sm text-ink-400 dark:text-ink-500">Test your understanding and earn a certificate</p>
+    </div>
+    <svg class="w-5 h-5 text-ink-400 transition-transform section-chevron" id="chevron-quiz" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+  <div class="collapsible-content open" id="content-quiz">
+    <div class="section-card">
+      <div id="quizArea"></div>
+      <div id="quizResults" class="hidden mt-6">
+        <div class="text-center py-8">
+          <div class="text-6xl font-bold font-serif mb-2" id="scoreDisplay">0/0</div>
+          <p class="text-lg text-ink-500 dark:text-ink-400 mb-1" id="scorePercent"></p>
+          <p class="text-ink-400 dark:text-ink-500 mb-6" id="scoreMessage"></p>
+          <div class="flex flex-wrap gap-3 justify-center">
+            <button onclick="retakeQuiz()" class="px-6 py-2.5 bg-ink-200 dark:bg-ink-700 rounded-lg font-medium hover:bg-ink-300 dark:hover:bg-ink-600 transition-colors">Retake Quiz</button>
+            <button onclick="downloadResults()" class="px-6 py-2.5 bg-spring-500 dark:bg-emerald-600 text-white rounded-lg font-medium hover:bg-spring-600 dark:hover:bg-emerald-700 transition-colors">Download Results</button>
+            <button onclick="showCertificate()" class="px-6 py-2.5 bg-spring-500 dark:bg-emerald-600 text-white rounded-lg font-medium hover:bg-spring-600 dark:hover:bg-emerald-700 transition-colors">🏆 Get Certificate</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CERTIFICATE SECTION ==================== -->
+<section id="sec-certificate" class="tutorial-section mb-12 hidden">
+  <div class="section-card" id="certificateCard">
+    <h2 class="text-2xl font-bold font-serif mb-4 text-center">🏆 Completion Certificate</h2>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Your Full Name</label>
+      <input type="text" id="learnerName" placeholder="Enter your name for the certificate" class="w-full px-4 py-2.5 rounded-lg border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-800 focus:outline-none focus:ring-2 focus:ring-spring-500 dark:focus:ring-emerald-500">
+    </div>
+    <button onclick="printCertificate()" class="w-full py-3 bg-spring-500 dark:bg-emerald-600 text-white rounded-lg font-semibold hover:bg-spring-600 dark:hover:bg-emerald-700 transition-colors">Print / Save Certificate</button>
+  </div>
+</section>
+
+<!-- Printable Certificate (hidden until print) -->
+<div id="printCertificate" class="print-only" style="text-align:center; padding: 60px; border: 8px double #6db33f; margin: 40px;">
+  <div style="font-size:14px; letter-spacing:3px; text-transform:uppercase; color:#888; margin-bottom:20px;">Certificate of Completion</div>
+  <div style="font-size:42px; font-family:'Source Serif 4',Georgia,serif; font-weight:700; color:#1c1917; margin-bottom:10px;" id="certName"></div>
+  <div style="font-size:16px; color:#57534e; margin-bottom:30px;">has successfully completed the</div>
+  <div style="font-size:28px; font-family:'Source Serif 4',Georgia,serif; font-weight:600; color:#6db33f; margin-bottom:10px;">Spring Boot 3.5 Masterclass</div>
+  <div style="font-size:14px; color:#57534e; margin-bottom:30px;">Complete Tutorial for Building Production-Ready Applications</div>
+  <div style="font-size:18px; margin-bottom:5px;">Score: <strong id="certScore"></strong></div>
+  <div style="font-size:14px; color:#888;" id="certDate"></div>
+  <div style="margin-top:40px; font-size:12px; color:#aaa;">This certificate was generated by the Spring Boot Masterclass Tutorial</div>
+</div>
+
+</div><!-- end tutorialContent -->
+</main>
+
+<script>
+// ========================================
+// DATA
+// ========================================
+const sections = [
+  { id:'project-setup', title:'Project Setup', num:'01' },
+  { id:'rest-api', title:'REST API & CRUD', num:'02' },
+  { id:'validation', title:'Validation & Exceptions', num:'03' },
+  { id:'database', title:'Database & PostGIS', num:'04' },
+  { id:'security', title:'Security & Keycloak', num:'05' },
+  { id:'stubs', title:'Stub Mode', num:'06' },
+  { id:'aws', title:'AWS S3 & SQS', num:'07' },
+  { id:'temporal', title:'Temporal Workflows', num:'08' },
+  { id:'swagger', title:'Swagger / OpenAPI', num:'09' },
+  { id:'testing', title:'Testing', num:'10' },
+  { id:'docker', title:'Docker & CI/CD', num:'11' },
+  { id:'patterns', title:'Patterns & Best Practices', num:'12' },
+  { id:'quiz', title:'Quiz', num:'🎯' },
+];
+
+const quizQuestions = [
+  { q:"What tool generates a Spring Boot project skeleton with selected dependencies?", opts:["Maven Central","Spring Initializr","Gradle Wrapper","IntelliJ IDEA"], ans:1, section:"project-setup", help:"Project Setup" },
+  { q:"Which HTTP method is used to CREATE a new resource in a REST API?", opts:["GET","PUT","POST","DELETE"], ans:2, section:"rest-api", help:"REST API Basics" },
+  { q:"What is the main purpose of a DTO (Data Transfer Object)?", opts:["Store data in the database","Control what data enters/exits your API","Handle exceptions","Configure security"], ans:1, section:"rest-api", help:"REST API Basics" },
+  { q:"Which annotation makes Spring validate the request body automatically?", opts:["@Validated","@Valid","@Check","@Verify"], ans:1, section:"validation", help:"Validation" },
+  { q:"What does @RestControllerAdvice do?", opts:["Creates REST endpoints","Handles exceptions globally across all controllers","Validates input","Configures Swagger"], ans:1, section:"validation", help:"Validation & Exceptions" },
+  { q:"What is Liquibase used for?", opts:["Load testing","Database schema version control and migrations","API documentation","Dependency injection"], ans:1, section:"database", help:"Database Setup" },
+  { q:"What does SRID 4326 represent in PostGIS?", opts:["A table ID","The WGS 84 GPS coordinate system","A PostgreSQL version","A port number"], ans:1, section:"database", help:"PostGIS Setup" },
+  { q:"What does OIDC add on top of OAuth2?", opts:["Database access","An identity/authentication layer","File storage","Message queuing"], ans:1, section:"security", help:"Security" },
+  { q:"How do you disable security for local development?", opts:["Delete SecurityConfig.java","Use @Profile(\"nosecurity\") on a permissive config","Set security.enabled=false","Remove the Spring Security dependency"], ans:1, section:"security", help:"Security" },
+  { q:"What is the purpose of stub mode?", opts:["Testing database performance","Returning static responses for frontend development","Encrypting API responses","Deploying to production"], ans:1, section:"stubs", help:"Stub Mode" },
+  { q:"Which AWS service is used for cloud file storage?", opts:["SQS","EC2","S3","Lambda"], ans:2, section:"aws", help:"AWS Integration" },
+  { q:"What makes Temporal workflows special compared to regular code?", opts:["They run faster","They survive crashes and server restarts","They use less memory","They don't need Java"], ans:1, section:"temporal", help:"Temporal" },
+  { q:"What does @Mock do in a Mockito test?", opts:["Creates a real database connection","Creates a fake object that simulates behavior","Runs the application","Generates test data"], ans:1, section:"testing", help:"Testing" },
+  { q:"In a multi-stage Dockerfile, what is the benefit of the second stage?", opts:["Faster build times","Smaller final image (only runtime, no build tools)","Better security","Automatic testing"], ans:1, section:"docker", help:"Docker" },
+  { q:"What is Terraform used for?", opts:["Java testing","Defining cloud infrastructure as code","API documentation","Database migrations"], ans:1, section:"docker", help:"Deployment" },
+  { q:"Which design pattern does Spring's @Autowired / constructor injection implement?", opts:["Factory Pattern","Strategy Pattern","Dependency Injection","Builder Pattern"], ans:2, section:"patterns", help:"Design Patterns" },
+  { q:"Which Lombok annotation generates the Builder pattern?", opts:["@Data","@Builder","@Getter","@Value"], ans:1, section:"patterns", help:"Design Patterns" },
+  { q:"What is the recommended approach for API versioning?", opts:["Change endpoint names randomly","Use URL prefixes like /api/v1/","Don't version APIs","Use HTTP headers only"], ans:1, section:"patterns", help:"Best Practices" },
+  { q:"Why should you never expose entity classes directly in your API?", opts:["They're too slow","They may contain sensitive data and database details","Java doesn't allow it","Spring Boot prevents it"], ans:1, section:"patterns", help:"Best Practices" },
+  { q:"What format does OpenLayers typically consume for geographic data?", opts:["CSV","XML","GeoJSON","YAML"], ans:2, section:"database", help:"GIS Support" },
+];
+
+// ========================================
+// STATE
+// ========================================
+let currentQuestion = 0;
+let userAnswers = new Array(quizQuestions.length).fill(-1);
+let quizSubmitted = false;
+let expandedSections = new Set(['project-setup','quiz']);
+
+// ========================================
+// INIT
+// ========================================
+function init() {
+  // Load state from localStorage
+  const saved = localStorage.getItem('springboot-tutorial');
+  if (saved) {
+    try {
+      const state = JSON.parse(saved);
+      if (state.expandedSections) expandedSections = new Set(state.expandedSections);
+      if (state.userAnswers) userAnswers = state.userAnswers;
+      if (state.quizSubmitted) quizSubmitted = state.quizSubmitted;
+      if (state.learnerName) {
+        setTimeout(() => {
+          const el = document.getElementById('learnerName');
+          if (el) el.value = state.learnerName;
+        }, 100);
+      }
+    } catch(e) {}
+  }
+
+  // Theme
+  const theme = localStorage.getItem('springboot-theme') || 'light';
+  if (theme === 'dark') document.documentElement.classList.add('dark');
+  updateThemeButton();
+
+  buildNav();
+  buildQuiz();
+  updateSectionStates();
+  updateProgress();
+}
+
+function saveState() {
+  const name = document.getElementById('learnerName');
+  localStorage.setItem('springboot-tutorial', JSON.stringify({
+    expandedSections: [...expandedSections],
+    userAnswers,
+    quizSubmitted,
+    learnerName: name ? name.value : ''
+  }));
+}
+
+// ========================================
+// THEME
+// ========================================
+function toggleTheme() {
+  document.documentElement.classList.toggle('dark');
+  const isDark = document.documentElement.classList.contains('dark');
+  localStorage.setItem('springboot-theme', isDark ? 'dark' : 'light');
+  updateThemeButton();
+}
+
+function updateThemeButton() {
+  const isDark = document.documentElement.classList.contains('dark');
+  document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
+  document.getElementById('themeLabel').textContent = isDark ? 'Light Mode' : 'Dark Mode';
+}
+
+// ========================================
+// NAVIGATION
+// ========================================
+function buildNav() {
+  const nav = document.getElementById('navContainer');
+  nav.innerHTML = sections.map(s => `
+    <div class="nav-item" data-section="${s.id}" onclick="scrollToSection('${s.id}')">
+      <span class="font-mono text-xs opacity-50 mr-2">${s.num}</span>${s.title}
+    </div>
+  `).join('');
+  document.getElementById('navTotal').textContent = sections.length - 1; // exclude quiz
+}
+
+function scrollToSection(id) {
+  const el = document.getElementById('sec-' + id);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!expandedSections.has(id)) {
+      expandedSections.add(id);
+      updateSectionStates();
+      saveState();
+    }
+  }
+  // Close mobile nav
+  if (window.innerWidth < 1024) toggleMobileNav();
+}
+
+function toggleMobileNav() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('navOverlay');
+  sidebar.classList.toggle('-translate-x-full');
+  overlay.classList.toggle('hidden');
+}
+
+// ========================================
+// SECTIONS
+// ========================================
+function toggleSection(id) {
+  if (expandedSections.has(id)) {
+    expandedSections.delete(id);
+  } else {
+    expandedSections.add(id);
+  }
+  updateSectionStates();
+  saveState();
+}
+
+function updateSectionStates() {
+  sections.forEach(s => {
+    const content = document.getElementById('content-' + s.id);
+    const chevron = document.getElementById('chevron-' + s.id);
+    if (content) {
+      if (expandedSections.has(s.id)) {
+        content.classList.add('open');
+        if (chevron) chevron.style.transform = 'rotate(180deg)';
+      } else {
+        content.classList.remove('open');
+        if (chevron) chevron.style.transform = 'rotate(0)';
+      }
+    }
+  });
+}
+
+// ========================================
+// PROGRESS
+// ========================================
+function updateProgress() {
+  const viewedCount = expandedSections.size;
+  const total = sections.length - 1;
+  document.getElementById('navProgress').textContent = Math.min(viewedCount, total);
+  document.getElementById('navProgressBar').style.width = Math.min(100, (viewedCount / total * 100)) + '%';
+}
+
+// Scroll progress bar
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const scrolled = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('progressBar').style.width = scrolled + '%';
+
+  // Back to top
+  const btn = document.getElementById('backToTop');
+  if (h.scrollTop > 500) btn.classList.add('visible');
+  else btn.classList.remove('visible');
+
+  // Active nav
+  updateActiveNav();
+});
+
+function updateActiveNav() {
+  const items = document.querySelectorAll('.nav-item');
+  let activeId = sections[0].id;
+  sections.forEach(s => {
+    const el = document.getElementById('sec-' + s.id);
+    if (el && el.getBoundingClientRect().top <= 200) activeId = s.id;
+  });
+  items.forEach(item => {
+    item.classList.toggle('active', item.dataset.section === activeId);
+  });
+
+  // Track viewed
+  if (!expandedSections.has(activeId) && activeId !== 'quiz') {
+    expandedSections.add(activeId);
+    updateProgress();
+    saveState();
+  }
+}
+
+// ========================================
+// CODE COPY
+// ========================================
+function copyCode(btn) {
+  const code = btn.closest('.code-block').querySelector('pre').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+// ========================================
+// QUIZ
+// ========================================
+function buildQuiz() {
+  const area = document.getElementById('quizArea');
+  if (quizSubmitted) {
+    showResults();
+    return;
+  }
+
+  let html = `<div class="text-center mb-6">
+    <p class="text-ink-500 dark:text-ink-400">Answer all ${quizQuestions.length} questions to test your knowledge.</p>
+    <div class="mt-3 flex items-center justify-center gap-2 text-sm font-mono">
+      <span id="qProgress">1</span>/<span>${quizQuestions.length}</span>
+    </div>
+  </div>`;
+
+  quizQuestions.forEach((q, qi) => {
+    html += `<div class="quiz-question mb-8 ${qi === 0 ? '' : 'hidden'}" id="qq-${qi}">
+      <h4 class="font-semibold text-lg mb-1">${qi + 1}. ${q.q}</h4>
+      <button onclick="scrollToSection('${q.section}')" class="text-xs text-spring-500 dark:text-emerald-400 hover:underline mb-4 inline-block">💡 Get Help → ${q.help}</button>
+      <div class="space-y-2">
+        ${q.opts.map((o, oi) => `
+          <div class="quiz-option ${userAnswers[qi] === oi ? 'selected' : ''}" onclick="selectAnswer(${qi}, ${oi})">
+            <span class="font-mono text-sm text-ink-400 mr-2">${String.fromCharCode(65 + oi)}.</span> ${o}
+          </div>
+        `).join('')}
+      </div>
+      <div class="flex justify-between mt-4">
+        <button onclick="prevQuestion(${qi})" class="px-4 py-2 rounded-lg border border-ink-200 dark:border-ink-700 text-sm ${qi === 0 ? 'invisible' : ''} hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors">← Previous</button>
+        ${qi === quizQuestions.length - 1 ?
+          `<button onclick="submitQuiz()" class="px-6 py-2 bg-spring-500 dark:bg-emerald-600 text-white rounded-lg font-medium text-sm hover:bg-spring-600 dark:hover:bg-emerald-700 transition-colors">Submit Quiz</button>` :
+          `<button onclick="nextQuestion(${qi})" class="px-4 py-2 bg-spring-500 dark:bg-emerald-600 text-white rounded-lg text-sm hover:bg-spring-600 dark:hover:bg-emerald-700 transition-colors">Next →</button>`
+        }
+      </div>
+    </div>`;
+  });
+
+  area.innerHTML = html;
+}
+
+function selectAnswer(qi, oi) {
+  userAnswers[qi] = oi;
+  const parent = document.getElementById('qq-' + qi);
+  parent.querySelectorAll('.quiz-option').forEach((el, idx) => {
+    el.classList.toggle('selected', idx === oi);
+  });
+  saveState();
+}
+
+function nextQuestion(qi) {
+  document.getElementById('qq-' + qi).classList.add('hidden');
+  document.getElementById('qq-' + (qi + 1)).classList.remove('hidden');
+  currentQuestion = qi + 1;
+  document.getElementById('qProgress').textContent = currentQuestion + 1;
+}
+
+function prevQuestion(qi) {
+  document.getElementById('qq-' + qi).classList.add('hidden');
+  document.getElementById('qq-' + (qi - 1)).classList.remove('hidden');
+  currentQuestion = qi - 1;
+  document.getElementById('qProgress').textContent = currentQuestion + 1;
+}
+
+function submitQuiz() {
+  const unanswered = userAnswers.filter(a => a === -1).length;
+  if (unanswered > 0) {
+    if (!confirm(`You have ${unanswered} unanswered question(s). Submit anyway?`)) return;
+  }
+  quizSubmitted = true;
+  saveState();
+  showResults();
+}
+
+function showResults() {
+  let correct = 0;
+  quizQuestions.forEach((q, i) => {
+    if (userAnswers[i] === q.ans) correct++;
+  });
+
+  const total = quizQuestions.length;
+  const pct = Math.round((correct / total) * 100);
+
+  document.getElementById('quizArea').innerHTML = '';
+  const results = document.getElementById('quizResults');
+  results.classList.remove('hidden');
+  document.getElementById('scoreDisplay').textContent = `${correct}/${total}`;
+  document.getElementById('scorePercent').textContent = `${pct}%`;
+  document.getElementById('scoreMessage').textContent =
+    pct >= 80 ? '🎉 Excellent! You have a strong grasp of Spring Boot!' :
+    pct >= 60 ? '👍 Good job! Review the sections you missed.' :
+    '📚 Keep learning! Re-read the tutorial sections and try again.';
+
+  // Show certificate section
+  if (pct >= 60) {
+    document.getElementById('sec-certificate').classList.remove('hidden');
+  }
+
+  // Show detailed results
+  let detailHtml = '<div class="mt-8 space-y-3">';
+  quizQuestions.forEach((q, i) => {
+    const isCorrect = userAnswers[i] === q.ans;
+    detailHtml += `
+      <div class="flex items-start gap-3 p-3 rounded-lg ${isCorrect ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30'}">
+        <span class="text-lg">${isCorrect ? '✅' : '❌'}</span>
+        <div class="text-sm">
+          <p class="font-medium">${i + 1}. ${q.q}</p>
+          ${!isCorrect ? `<p class="text-red-600 dark:text-red-400 mt-1">Your answer: ${userAnswers[i] >= 0 ? q.opts[userAnswers[i]] : 'Unanswered'}</p>` : ''}
+          <p class="text-green-700 dark:text-green-400 mt-0.5">Correct: ${q.opts[q.ans]}</p>
+          ${!isCorrect ? `<button onclick="scrollToSection('${q.section}')" class="text-xs text-spring-500 dark:text-emerald-400 hover:underline mt-1">💡 Review: ${q.help}</button>` : ''}
+        </div>
+      </div>`;
+  });
+  detailHtml += '</div>';
+  results.innerHTML += detailHtml;
+}
+
+function retakeQuiz() {
+  quizSubmitted = false;
+  userAnswers = new Array(quizQuestions.length).fill(-1);
+  currentQuestion = 0;
+  document.getElementById('quizResults').classList.add('hidden');
+  document.getElementById('quizResults').innerHTML = '';
+  document.getElementById('sec-certificate').classList.add('hidden');
+  saveState();
+  buildQuiz();
+}
+
+// ========================================
+// CERTIFICATE & DOWNLOAD
+// ========================================
+function showCertificate() {
+  const certSection = document.getElementById('sec-certificate');
+  certSection.classList.remove('hidden');
+  certSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+function printCertificate() {
+  const name = document.getElementById('learnerName').value.trim();
+  if (!name) { alert('Please enter your name.'); return; }
+  saveState();
+
+  let correct = 0;
+  quizQuestions.forEach((q, i) => { if (userAnswers[i] === q.ans) correct++; });
+
+  document.getElementById('certName').textContent = name;
+  document.getElementById('certScore').textContent = `${correct}/${quizQuestions.length} (${Math.round(correct/quizQuestions.length*100)}%)`;
+  document.getElementById('certDate').textContent = 'Completed on ' + new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+
+  window.print();
+}
+
+function downloadResults() {
+  let correct = 0;
+  quizQuestions.forEach((q, i) => { if (userAnswers[i] === q.ans) correct++; });
+
+  let text = 'SPRING BOOT 3.5 MASTERCLASS — QUIZ RESULTS\n';
+  text += '=============================================\n';
+  text += `Date: ${new Date().toLocaleString()}\n`;
+  text += `Score: ${correct}/${quizQuestions.length} (${Math.round(correct/quizQuestions.length*100)}%)\n\n`;
+
+  quizQuestions.forEach((q, i) => {
+    const isCorrect = userAnswers[i] === q.ans;
+    text += `${i+1}. ${q.q}\n`;
+    text += `   Your answer: ${userAnswers[i] >= 0 ? q.opts[userAnswers[i]] : 'Unanswered'}\n`;
+    text += `   Correct answer: ${q.opts[q.ans]}\n`;
+    text += `   ${isCorrect ? '✓ CORRECT' : '✗ INCORRECT'}\n\n`;
+  });
+
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'spring-boot-quiz-results.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ========================================
+// INIT ON LOAD
+// ========================================
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
