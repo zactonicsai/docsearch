@@ -1,11 +1,11 @@
-temporalio==1.9.0
-elasticsearch==8.17.0
-httpx==0.28.1
+temporalio
+elasticsearch
+httpx
 
 # Unstructured — open-source document parsing (Apache-2.0)
 # The partition() auto-detects file type and routes to the right parser
-unstructured[all-docs]==0.17.2
+unstructured[all-docs]
 
 # Tesseract bindings for OCR (used by unstructured for images/scanned PDFs)
-pytesseract==0.3.13
-Pillow==11.1.0
+pytesseract
+Pillow
