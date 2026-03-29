@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pytest Mastery — A Complete Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['Outfit', 'sans-serif'],
+                        body: ['Source Serif 4', 'Georgia', 'serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        ink: { 50: '#f7f7f5', 100: '#edecea', 200: '#d9d6d1', 300: '#b8b3ab', 400: '#9a9389', 500: '#7d756a', 600: '#685f55', 700: '#554e45', 800: '#48423b', 900: '#3e3934', 950: '#1e1c19' },
+                        ember: { 400: '#fb923c', 500: '#f97316', 600: '#ea580c' },
+                        leaf: { 400: '#4ade80', 500: '#22c55e', 600: '#16a34a' },
+                        sky: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' },
+                        rose: { 400: '#fb7185', 500: '#f43f5e', 600: '#e11d48' },
+                        violet: { 400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed' },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        .dark ::-webkit-scrollbar-thumb { background: #554e45; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #d9d6d1; border-radius: 4px; }
+
+        /* Code blocks */
+        .code-block {
+            position: relative;
+            overflow-x: auto;
+        }
+        .code-block pre {
+            tab-size: 4;
+        }
+        .code-block .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .code-block:hover .copy-btn {
+            opacity: 1;
+        }
+
+        /* Smooth section reveals */
+        .section-reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .section-reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Sidebar active link */
+        .nav-link.active {
+            border-left-color: #f97316;
+            color: #f97316;
+        }
+        .dark .nav-link.active {
+            border-left-color: #fb923c;
+            color: #fb923c;
+        }
+
+        /* Concept cards */
+        .concept-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .concept-card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Grain overlay */
+        .grain::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            opacity: 0.03;
+            z-index: 50;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        /* Print friendly */
+        @media print {
+            .no-print { display: none !important; }
+            .grain::before { display: none; }
+        }
+    </style>
+</head>
+<body class="grain bg-ink-50 dark:bg-ink-950 text-ink-800 dark:text-ink-200 font-body transition-colors duration-300">
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TOP BAR                                                 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<header class="no-print fixed top-0 left-0 right-0 z-40 bg-ink-50/80 dark:bg-ink-950/80 backdrop-blur-xl border-b border-ink-200 dark:border-ink-800">
+    <div class="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">🧪</span>
+            <span class="font-display font-800 text-lg tracking-tight text-ink-900 dark:text-ink-100">Pytest Mastery</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="https://docs.pytest.org/" target="_blank" class="text-xs font-mono text-ink-500 hover:text-ember-500 transition-colors">docs.pytest.org ↗</a>
+            <button id="themeToggle" class="w-9 h-9 rounded-lg bg-ink-200 dark:bg-ink-800 flex items-center justify-center hover:bg-ink-300 dark:hover:bg-ink-700 transition-colors" aria-label="Toggle theme">
+                <span id="themeIcon" class="text-sm">🌙</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SIDEBAR NAV                                             -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<nav id="sidebar" class="no-print fixed top-14 left-0 w-64 h-[calc(100vh-3.5rem)] overflow-y-auto hidden lg:block bg-ink-50 dark:bg-ink-950 border-r border-ink-200 dark:border-ink-800 p-4 z-30">
+    <div class="space-y-1 text-sm">
+        <p class="font-display font-700 text-xs uppercase tracking-widest text-ink-400 dark:text-ink-500 mb-3 pl-3">Guide</p>
+        <a href="#what-is-pytest" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">What is Pytest?</a>
+        <a href="#installation" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">Installation &amp; Setup</a>
+        <a href="#first-test" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">Your First Test</a>
+        <a href="#core-concepts" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">Core Concepts</a>
+        <a href="#fixtures" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">Fixtures</a>
+        <a href="#mocking" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">Mocking &amp; Patching</a>
+        <a href="#async-tests" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">Async Testing</a>
+        <a href="#coverage" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">Code Coverage</a>
+        <a href="#configuration" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">Configuration</a>
+        <a href="#running-tests" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">Running Tests</a>
+
+        <p class="font-display font-700 text-xs uppercase tracking-widest text-ink-400 dark:text-ink-500 mb-3 mt-6 pl-3">Our Test Suite</p>
+        <a href="#dependencies" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">Dependencies</a>
+        <a href="#project-structure" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">Project Structure</a>
+        <a href="#test-shared" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">test_shared.py</a>
+        <a href="#test-activities" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">test_activities.py</a>
+        <a href="#test-workflows" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">test_workflows.py</a>
+        <a href="#test-worker" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">test_worker.py</a>
+        <a href="#test-run-worker" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">test_run_worker.py</a>
+        <a href="#conftest" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">conftest.py</a>
+
+        <p class="font-display font-700 text-xs uppercase tracking-widest text-ink-400 dark:text-ink-500 mb-3 mt-6 pl-3">Reference</p>
+        <a href="#best-practices" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">Best Practices</a>
+        <a href="#cheatsheet" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">Cheat Sheet</a>
+        <a href="#resources" class="nav-link block pl-3 py-1.5 border-l-2 border-transparent text-ink-600 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 transition-colors">Resources &amp; Links</a>
+    </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- MAIN CONTENT                                            -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<main class="lg:ml-64 pt-14">
+    <div class="max-w-4xl mx-auto px-6 py-12 lg:py-16">
+
+        <!-- HERO -->
+        <div class="section-reveal mb-20">
+            <div class="inline-block mb-4 px-3 py-1 rounded-full bg-ember-500/10 dark:bg-ember-400/10 text-ember-600 dark:text-ember-400 text-xs font-mono font-600 tracking-wide">
+                COMPLETE TUTORIAL
+            </div>
+            <h1 class="font-display font-900 text-5xl lg:text-6xl leading-[1.05] tracking-tight text-ink-950 dark:text-ink-50 mb-6">
+                Pytest from Zero<br>to Production
+            </h1>
+            <p class="text-xl text-ink-500 dark:text-ink-400 leading-relaxed max-w-2xl">
+                A step-by-step guide to Python testing — with a real-world Temporal worker project as the running example. Every concept explained, every test dissected.
+            </p>
+            <div class="flex flex-wrap gap-3 mt-8">
+                <span class="px-3 py-1 rounded-md bg-leaf-500/10 dark:bg-leaf-400/10 text-leaf-600 dark:text-leaf-400 text-xs font-mono">86 tests</span>
+                <span class="px-3 py-1 rounded-md bg-sky-500/10 dark:bg-sky-400/10 text-sky-600 dark:text-sky-400 text-xs font-mono">96.46% coverage</span>
+                <span class="px-3 py-1 rounded-md bg-violet-500/10 dark:bg-violet-400/10 text-violet-600 dark:text-violet-400 text-xs font-mono">5 modules tested</span>
+            </div>
+        </div>
+
+        <!-- ─────────────────────────────────────────────── -->
+        <!-- PART 1: PYTEST FUNDAMENTALS                     -->
+        <!-- ─────────────────────────────────────────────── -->
+
+        <!-- WHAT IS PYTEST -->
+        <section id="what-is-pytest" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">What is Pytest?</h2>
+            <p class="mb-4 leading-relaxed">
+                <strong>Pytest</strong> is Python's most popular testing framework. It replaces the verbose <code class="px-1.5 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-sm">unittest</code> style with clean, simple functions. No boilerplate classes required — just write functions that start with <code class="px-1.5 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-sm">test_</code>.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-4 mb-6">
+                <div class="concept-card rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <div class="text-rose-500 font-mono text-xs font-600 mb-2">OLD WAY — unittest</div>
+                    <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code>import unittest
+
+class TestMath(unittest.TestCase):
+    def test_add(self):
+        self.assertEqual(1 + 1, 2)
+
+if __name__ == '__main__':
+    unittest.main()</code></pre>
+                    </div>
+                </div>
+                <div class="concept-card rounded-xl border-2 border-leaf-500/30 dark:border-leaf-400/30 p-5 bg-white dark:bg-ink-900">
+                    <div class="text-leaf-500 font-mono text-xs font-600 mb-2">NEW WAY — pytest ✓</div>
+                    <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code>def test_add():
+    assert 1 + 1 == 2
+
+
+# That's it. Run: pytest</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-xl bg-sky-500/5 dark:bg-sky-400/5 border border-sky-500/20 dark:border-sky-400/20 p-5 mb-4">
+                <p class="text-sm"><strong class="text-sky-600 dark:text-sky-400">Why pytest wins:</strong> Auto-discovery of tests, powerful fixtures, parametrize, rich assertion introspection (it shows you <em>what</em> failed, not just <em>that</em> it failed), 1000+ plugins, and it's the industry standard.</p>
+            </div>
+        </section>
+
+        <!-- INSTALLATION -->
+        <section id="installation" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">Installation &amp; Setup</h2>
+
+            <h3 class="font-display font-700 text-xl text-ink-800 dark:text-ink-200 mb-3 mt-6">Step 1 — Install pytest</h3>
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mb-4">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code><span class="text-ink-400"># Basic install</span>
+pip install pytest
+
+<span class="text-ink-400"># With common plugins (recommended)</span>
+pip install pytest pytest-asyncio pytest-cov pytest-mock</code></pre>
+            </div>
+
+            <h3 class="font-display font-700 text-xl text-ink-800 dark:text-ink-200 mb-3 mt-6">Step 2 — Verify installation</h3>
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mb-4">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code>pytest --version
+<span class="text-leaf-600 dark:text-leaf-400"># pytest 8.x.x</span></code></pre>
+            </div>
+
+            <h3 class="font-display font-700 text-xl text-ink-800 dark:text-ink-200 mb-3 mt-6">Step 3 — Project layout</h3>
+            <p class="mb-3 leading-relaxed">Pytest auto-discovers tests. Just follow the naming convention:</p>
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mb-4">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code>my_project/
+├── my_module.py          <span class="text-ink-400"># Your source code</span>
+├── conftest.py           <span class="text-ink-400"># Shared fixtures (auto-loaded)</span>
+├── test_my_module.py     <span class="text-ink-400"># Tests (prefix: test_)</span>
+└── pyproject.toml        <span class="text-ink-400"># Configuration</span></code></pre>
+            </div>
+
+            <div class="rounded-xl bg-ember-500/5 dark:bg-ember-400/5 border border-ember-500/20 dark:border-ember-400/20 p-5">
+                <p class="text-sm"><strong class="text-ember-600 dark:text-ember-400">Naming rules:</strong> Files must start with <code class="px-1 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-xs">test_</code> or end with <code class="px-1 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-xs">_test.py</code>. Functions must start with <code class="px-1 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-xs">test_</code>. Classes must start with <code class="px-1 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-xs">Test</code>.</p>
+            </div>
+        </section>
+
+        <!-- FIRST TEST -->
+        <section id="first-test" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">Your First Test</h2>
+
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mb-4">
+                <div class="text-xs font-mono text-ink-400 mb-2">test_example.py</div>
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code><span class="text-ink-400"># 1. A simple function test</span>
+def test_addition():
+    assert 1 + 1 == 2
+
+<span class="text-ink-400"># 2. Testing for exceptions</span>
+import pytest
+
+def test_division_by_zero():
+    with pytest.raises(ZeroDivisionError):
+        1 / 0
+
+<span class="text-ink-400"># 3. Testing with a class</span>
+class TestStringMethods:
+    def test_upper(self):
+        assert "hello".upper() == "HELLO"
+
+    def test_startswith(self):
+        assert "pytest".startswith("py")</code></pre>
+            </div>
+
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mb-4">
+                <div class="text-xs font-mono text-ink-400 mb-2">Terminal</div>
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code>$ pytest test_example.py -v
+<span class="text-leaf-600 dark:text-leaf-400">test_example.py::test_addition PASSED
+test_example.py::test_division_by_zero PASSED
+test_example.py::TestStringMethods::test_upper PASSED
+test_example.py::TestStringMethods::test_startswith PASSED
+
+========================= 4 passed in 0.01s =========================</span></code></pre>
+            </div>
+        </section>
+
+        <!-- CORE CONCEPTS -->
+        <section id="core-concepts" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">Core Concepts</h2>
+
+            <div class="space-y-6">
+                <!-- assert -->
+                <div class="concept-card rounded-xl border border-ink-200 dark:border-ink-800 p-6 bg-white dark:bg-ink-900">
+                    <h3 class="font-display font-700 text-lg text-ink-900 dark:text-ink-100 mb-2">
+                        <span class="text-ember-500 font-mono text-sm mr-2">01</span> assert — The Foundation
+                    </h3>
+                    <p class="text-sm mb-3 text-ink-600 dark:text-ink-400">Pytest uses plain Python <code class="px-1 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-xs">assert</code> statements. When they fail, pytest shows exactly what went wrong.</p>
+                    <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-3">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code>assert result.success is True          <span class="text-ink-400"># Boolean check</span>
+assert "error" in result.message       <span class="text-ink-400"># Membership</span>
+assert len(items) == 5                 <span class="text-ink-400"># Equality</span>
+assert result is not None              <span class="text-ink-400"># Identity</span></code></pre>
+                    </div>
+                </div>
+
+                <!-- pytest.raises -->
+                <div class="concept-card rounded-xl border border-ink-200 dark:border-ink-800 p-6 bg-white dark:bg-ink-900">
+                    <h3 class="font-display font-700 text-lg text-ink-900 dark:text-ink-100 mb-2">
+                        <span class="text-ember-500 font-mono text-sm mr-2">02</span> pytest.raises — Testing Exceptions
+                    </h3>
+                    <p class="text-sm mb-3 text-ink-600 dark:text-ink-400">Verify that code raises the expected exception. The test passes only if the exception is thrown.</p>
+                    <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-3">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code>with pytest.raises(TypeError):
+    DocumentTask(document_id="d1")  <span class="text-ink-400"># Missing required fields</span>
+
+with pytest.raises(SystemExit) as exc_info:
+    await run_worker()
+assert exc_info.value.code == 1  <span class="text-ink-400"># Check exit code</span></code></pre>
+                    </div>
+                </div>
+
+                <!-- markers -->
+                <div class="concept-card rounded-xl border border-ink-200 dark:border-ink-800 p-6 bg-white dark:bg-ink-900">
+                    <h3 class="font-display font-700 text-lg text-ink-900 dark:text-ink-100 mb-2">
+                        <span class="text-ember-500 font-mono text-sm mr-2">03</span> Markers — Labeling Tests
+                    </h3>
+                    <p class="text-sm mb-3 text-ink-600 dark:text-ink-400">Markers tag tests with metadata. The most common is <code class="px-1 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-xs">@pytest.mark.asyncio</code> for async tests.</p>
+                    <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-3">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code>@pytest.mark.asyncio
+async def test_async_function():
+    result = await some_async_call()
+    assert result == expected
+
+@pytest.mark.skip(reason="Not implemented yet")
+def test_future_feature():
+    pass
+
+@pytest.mark.parametrize("input,expected", [(1, 2), (3, 4)])
+def test_increment(input, expected):
+    assert input + 1 == expected</code></pre>
+                    </div>
+                </div>
+
+                <!-- test classes -->
+                <div class="concept-card rounded-xl border border-ink-200 dark:border-ink-800 p-6 bg-white dark:bg-ink-900">
+                    <h3 class="font-display font-700 text-lg text-ink-900 dark:text-ink-100 mb-2">
+                        <span class="text-ember-500 font-mono text-sm mr-2">04</span> Test Classes — Grouping Related Tests
+                    </h3>
+                    <p class="text-sm mb-3 text-ink-600 dark:text-ink-400">Group related tests in classes for organization. No inheritance needed — just prefix with <code class="px-1 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-xs">Test</code>.</p>
+                    <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-3">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code>class TestExtractCsv:
+    def test_csv_extraction(self, tmp_csv_file):
+        ...
+    def test_tsv_extraction(self, tmp_tsv_file):
+        ...
+    def test_large_csv_truncates(self, tmp_path):
+        ...</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FIXTURES -->
+        <section id="fixtures" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">Fixtures</h2>
+            <p class="mb-4 leading-relaxed">
+                Fixtures are pytest's way of providing <strong>setup and teardown</strong>. A test declares what it needs by naming fixtures in its function signature — pytest injects them automatically.
+            </p>
+
+            <h3 class="font-display font-700 text-xl text-ink-800 dark:text-ink-200 mb-3">Built-in Fixtures</h3>
+            <div class="overflow-x-auto mb-6">
+                <table class="w-full text-sm border border-ink-200 dark:border-ink-800 rounded-lg overflow-hidden">
+                    <thead class="bg-ink-100 dark:bg-ink-900">
+                        <tr>
+                            <th class="text-left px-4 py-2 font-mono font-600 text-ink-700 dark:text-ink-300">Fixture</th>
+                            <th class="text-left px-4 py-2 font-600 text-ink-700 dark:text-ink-300">What it does</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-ink-200 dark:divide-ink-800">
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">tmp_path</td><td class="px-4 py-2 text-ink-600 dark:text-ink-400">Gives a unique temporary directory (<code class="text-xs font-mono">pathlib.Path</code>) per test</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">tmp_path_factory</td><td class="px-4 py-2 text-ink-600 dark:text-ink-400">Session-scoped temp directory factory</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">capsys</td><td class="px-4 py-2 text-ink-600 dark:text-ink-400">Captures stdout/stderr</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">monkeypatch</td><td class="px-4 py-2 text-ink-600 dark:text-ink-400">Modify/replace objects, env vars, paths</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">request</td><td class="px-4 py-2 text-ink-600 dark:text-ink-400">Access to the requesting test context</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="font-display font-700 text-xl text-ink-800 dark:text-ink-200 mb-3">Custom Fixtures (from our conftest.py)</h3>
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mb-4">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code><span class="text-ink-400"># conftest.py — auto-loaded by pytest, no imports needed</span>
+
+@pytest.fixture
+def sample_task():
+    """Factory fixture — returns a function that creates DocumentTask."""
+    def _make(document_id="doc-001", filename="report.pdf", **kw):
+        return DocumentTask(document_id=document_id, filename=filename, ...)
+    return _make
+
+@pytest.fixture
+def tmp_csv_file(tmp_path):  <span class="text-ink-400"># ← uses built-in tmp_path!</span>
+    """Creates a temp CSV file for tests."""
+    p = tmp_path / "data.csv"
+    p.write_text("name,age\nAlice,30\nBob,25\n")
+    return p
+
+@pytest.fixture
+def mock_activity_heartbeat():
+    """Patches Temporal heartbeat so tests run without a server."""
+    with patch("temporalio.activity.heartbeat") as mock_hb:
+        yield mock_hb  <span class="text-ink-400"># ← yield = teardown happens after test</span></code></pre>
+            </div>
+
+            <h3 class="font-display font-700 text-xl text-ink-800 dark:text-ink-200 mb-3">Using Fixtures in Tests</h3>
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mb-4">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code><span class="text-ink-400"># Just name the fixture in the function signature — pytest injects it</span>
+
+async def test_csv_extraction(self, tmp_csv_file):
+    result = _extract_csv(tmp_csv_file)
+    assert "Alice | 30" in result
+
+async def test_file_not_found(self, sample_task, mock_activity_heartbeat):
+    task = sample_task(file_path="/nonexistent/file.pdf")
+    result = await extract_text(task)
+    assert result.success is False</code></pre>
+            </div>
+
+            <div class="rounded-xl bg-violet-500/5 dark:bg-violet-400/5 border border-violet-500/20 dark:border-violet-400/20 p-5">
+                <p class="text-sm"><strong class="text-violet-600 dark:text-violet-400">Fixture scopes:</strong> 
+                <code class="px-1 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-xs">@pytest.fixture(scope="function")</code> (default — runs per test),
+                <code class="px-1 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-xs">scope="class"</code>,
+                <code class="px-1 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-xs">scope="module"</code>,
+                <code class="px-1 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-xs">scope="session"</code>. 
+                Use <code class="px-1 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-xs">autouse=True</code> to apply to all tests in scope.
+                <a href="https://docs.pytest.org/en/stable/how-to/fixtures.html" target="_blank" class="text-violet-600 dark:text-violet-400 underline ml-1">Docs ↗</a></p>
+            </div>
+        </section>
+
+        <!-- MOCKING -->
+        <section id="mocking" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">Mocking &amp; Patching</h2>
+            <p class="mb-4 leading-relaxed">
+                Mocking replaces real objects with fake ones so you can test in isolation — without a database, network, or external service.
+            </p>
+
+            <h3 class="font-display font-700 text-xl text-ink-800 dark:text-ink-200 mb-3">Key Tools</h3>
+            <div class="overflow-x-auto mb-6">
+                <table class="w-full text-sm border border-ink-200 dark:border-ink-800 rounded-lg overflow-hidden">
+                    <thead class="bg-ink-100 dark:bg-ink-900">
+                        <tr>
+                            <th class="text-left px-4 py-2 font-mono font-600 text-ink-700 dark:text-ink-300">Tool</th>
+                            <th class="text-left px-4 py-2 font-600 text-ink-700 dark:text-ink-300">When to use</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-ink-200 dark:divide-ink-800">
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">MagicMock()</td><td class="px-4 py-2 text-ink-600 dark:text-ink-400">Create a fake object that records calls. Accepts any attribute/method.</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">AsyncMock()</td><td class="px-4 py-2 text-ink-600 dark:text-ink-400">Like MagicMock but for <code class="text-xs font-mono">async</code> functions — returns a coroutine.</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">patch("module.object")</td><td class="px-4 py-2 text-ink-600 dark:text-ink-400">Temporarily replace an object at its import path. Auto-restores after test.</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">patch.dict("sys.modules", {...})</td><td class="px-4 py-2 text-ink-600 dark:text-ink-400">Inject mock modules for libraries imported inside functions (e.g. <code class="text-xs font-mono">import docx</code>).</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="font-display font-700 text-xl text-ink-800 dark:text-ink-200 mb-3">Pattern 1 — Patching a module-level import</h3>
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mb-4">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code><span class="text-ink-400"># activities.py imports Elasticsearch at module level</span>
+<span class="text-ink-400"># We patch where it's USED, not where it's defined</span>
+
+with patch("activities.Elasticsearch", return_value=mock_es):
+    result = await index_to_elasticsearch(task, extraction)
+
+mock_es.index.assert_called_once()  <span class="text-ink-400"># Verify it was called</span></code></pre>
+            </div>
+
+            <h3 class="font-display font-700 text-xl text-ink-800 dark:text-ink-200 mb-3">Pattern 2 — Patching a local import (sys.modules)</h3>
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mb-4">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code><span class="text-ink-400"># worker.py does `import docx` INSIDE _extract_docx()</span>
+<span class="text-ink-400"># Can't use patch("worker.docx") — it doesn't exist at module level</span>
+<span class="text-ink-400"># Solution: inject a mock module into sys.modules</span>
+
+mock_docx = MagicMock()
+mock_docx.Document.return_value = mock_doc_object
+
+with patch.dict("sys.modules", {"docx": mock_docx}):
+    result = _extract_docx(path)  <span class="text-ink-400"># Now `import docx` finds our mock</span></code></pre>
+            </div>
+
+            <h3 class="font-display font-700 text-xl text-ink-800 dark:text-ink-200 mb-3">Pattern 3 — Mocking async HTTP clients</h3>
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mb-4">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code><span class="text-ink-400"># The code uses: async with httpx.AsyncClient() as client:</span>
+<span class="text-ink-400"># We mock the context manager (__aenter__ / __aexit__)</span>
+
+mock_response = MagicMock(status_code=200)
+mock_client = AsyncMock()
+mock_client.post.return_value = mock_response
+
+with patch("activities.httpx.AsyncClient") as MockClient:
+    MockClient.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+    MockClient.return_value.__aexit__ = AsyncMock(return_value=False)
+    result = await update_document_status("doc-001", "completed", "text")
+
+assert result is True
+mock_client.post.assert_called_once()</code></pre>
+            </div>
+        </section>
+
+        <!-- ASYNC -->
+        <section id="async-tests" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">Async Testing</h2>
+            <p class="mb-4 leading-relaxed">
+                The <strong>pytest-asyncio</strong> plugin lets you write <code class="px-1.5 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-sm">async def test_...</code> functions. It manages the event loop for you.
+            </p>
+
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mb-4">
+                <div class="text-xs font-mono text-ink-400 mb-2">pyproject.toml</div>
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code>[tool.pytest.ini_options]
+asyncio_mode = "auto"  <span class="text-ink-400"># ← All async tests run automatically, no decorator needed</span></code></pre>
+            </div>
+
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mb-4">
+                <div class="text-xs font-mono text-ink-400 mb-2">test_activities.py</div>
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code><span class="text-ink-400"># With asyncio_mode = "auto", just write async tests normally:</span>
+
+async def test_successful_extraction(self, sample_task, tmp_text_file):
+    task = sample_task(filename="sample.txt", file_path=str(tmp_text_file))
+    with patch("activities._extract_with_unstructured", return_value="content"):
+        result = await extract_text(task)
+    assert result.success is True</code></pre>
+            </div>
+
+            <div class="rounded-xl bg-sky-500/5 dark:bg-sky-400/5 border border-sky-500/20 dark:border-sky-400/20 p-5">
+                <p class="text-sm"><strong class="text-sky-600 dark:text-sky-400">Without auto mode:</strong> Add <code class="px-1 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-xs">@pytest.mark.asyncio</code> above each async test function.
+                <a href="https://pytest-asyncio.readthedocs.io/" target="_blank" class="text-sky-600 dark:text-sky-400 underline ml-1">Docs ↗</a></p>
+            </div>
+        </section>
+
+        <!-- COVERAGE -->
+        <section id="coverage" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">Code Coverage</h2>
+            <p class="mb-4 leading-relaxed">
+                <strong>pytest-cov</strong> measures which lines of your code are executed during tests. It wraps the <code class="px-1.5 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-sm">coverage.py</code> library.
+            </p>
+
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mb-4">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code><span class="text-ink-400"># Run with coverage for specific modules</span>
+pytest --cov=shared --cov=worker --cov-report=term-missing
+
+<span class="text-ink-400"># Branch coverage (tests if/else paths, not just lines)</span>
+pytest --cov=worker --cov-branch
+
+<span class="text-ink-400"># Fail if coverage drops below threshold</span>
+pytest --cov=worker --cov-fail-under=90
+
+<span class="text-ink-400"># Generate HTML report you can browse</span>
+pytest --cov=worker --cov-report=html:htmlcov</code></pre>
+            </div>
+
+            <h3 class="font-display font-700 text-xl text-ink-800 dark:text-ink-200 mb-3">Reading the Report</h3>
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mb-4">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code>Name            Stmts   Miss Branch BrPart  Cover   Missing
+-----------------------------------------------------------
+activities.py      69      0     12      0   <span class="text-leaf-600 dark:text-leaf-400 font-700">100%</span>
+shared.py          21      0      0      0   <span class="text-leaf-600 dark:text-leaf-400 font-700">100%</span>
+worker.py         265      7     66      8    <span class="text-leaf-600 dark:text-leaf-400 font-700">95%</span>   167, 273-274
+workflows.py       15      0      2      0   <span class="text-leaf-600 dark:text-leaf-400 font-700">100%</span>
+-----------------------------------------------------------
+TOTAL             418      7     90      9    <span class="text-leaf-600 dark:text-leaf-400 font-700">96%</span></code></pre>
+            </div>
+
+            <div class="overflow-x-auto mb-4">
+                <table class="w-full text-sm border border-ink-200 dark:border-ink-800 rounded-lg overflow-hidden">
+                    <thead class="bg-ink-100 dark:bg-ink-900">
+                        <tr>
+                            <th class="text-left px-4 py-2 font-600">Column</th>
+                            <th class="text-left px-4 py-2 font-600">Meaning</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-ink-200 dark:divide-ink-800">
+                        <tr><td class="px-4 py-2 font-mono text-ink-600 dark:text-ink-400">Stmts</td><td class="px-4 py-2 text-ink-600 dark:text-ink-400">Total executable statements</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ink-600 dark:text-ink-400">Miss</td><td class="px-4 py-2 text-ink-600 dark:text-ink-400">Statements never executed</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ink-600 dark:text-ink-400">Branch</td><td class="px-4 py-2 text-ink-600 dark:text-ink-400">Total branch paths (if/else, try/except)</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ink-600 dark:text-ink-400">BrPart</td><td class="px-4 py-2 text-ink-600 dark:text-ink-400">Partially covered branches (one path taken, other missed)</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ink-600 dark:text-ink-400">Missing</td><td class="px-4 py-2 text-ink-600 dark:text-ink-400">Line numbers not covered — these are what you add tests for</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- CONFIGURATION -->
+        <section id="configuration" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">Configuration</h2>
+            <p class="mb-4 leading-relaxed">
+                Put all pytest settings in <code class="px-1.5 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-sm">pyproject.toml</code> — one file for everything.
+            </p>
+
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mb-4">
+                <div class="text-xs font-mono text-ink-400 mb-2">pyproject.toml (from our project)</div>
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code>[tool.pytest.ini_options]
+asyncio_mode = "auto"                <span class="text-ink-400"># Auto-detect async tests</span>
+testpaths = ["."]                    <span class="text-ink-400"># Where to look for tests</span>
+python_files = ["test_*.py"]         <span class="text-ink-400"># File discovery pattern</span>
+python_classes = ["Test*"]           <span class="text-ink-400"># Class discovery pattern</span>
+python_functions = ["test_*"]        <span class="text-ink-400"># Function discovery pattern</span>
+addopts = ["-v", "--tb=short"]       <span class="text-ink-400"># Default CLI options</span>
+
+[tool.coverage.run]
+source = ["shared", "activities", "workflows", "worker"]
+branch = true                        <span class="text-ink-400"># Enable branch coverage</span>
+omit = ["test_*", "conftest.py"]     <span class="text-ink-400"># Exclude test files</span>
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 90                      <span class="text-ink-400"># Enforce minimum 90%</span>
+exclude_lines = [
+    "if __name__ == .__main__.",     <span class="text-ink-400"># Skip entry-point guard</span>
+    "pragma: no cover",              <span class="text-ink-400"># Explicit skip marker</span>
+]</code></pre>
+            </div>
+        </section>
+
+        <!-- RUNNING TESTS -->
+        <section id="running-tests" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">Running Tests</h2>
+
+            <div class="space-y-3">
+                <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code><span class="text-ink-400"># Run everything</span>
+pytest
+
+<span class="text-ink-400"># Run a single file</span>
+pytest test_worker.py
+
+<span class="text-ink-400"># Run a single class</span>
+pytest test_worker.py::TestExtractPdf
+
+<span class="text-ink-400"># Run a single test</span>
+pytest test_worker.py::TestExtractPdf::test_with_pymupdf
+
+<span class="text-ink-400"># Run tests matching a keyword</span>
+pytest -k "ocr"           <span class="text-ink-400"># All tests with "ocr" in the name</span>
+pytest -k "not slow"      <span class="text-ink-400"># Exclude tests containing "slow"</span>
+
+<span class="text-ink-400"># Stop on first failure</span>
+pytest -x
+
+<span class="text-ink-400"># Show print() output</span>
+pytest -s
+
+<span class="text-ink-400"># Verbose with long tracebacks</span>
+pytest -v --tb=long</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─────────────────────────────────────────────── -->
+        <!-- PART 2: OUR TEST SUITE EXPLAINED                -->
+        <!-- ─────────────────────────────────────────────── -->
+
+        <div class="section-reveal mb-12 mt-20 border-t border-ink-200 dark:border-ink-800 pt-12">
+            <div class="inline-block mb-4 px-3 py-1 rounded-full bg-leaf-500/10 dark:bg-leaf-400/10 text-leaf-600 dark:text-leaf-400 text-xs font-mono font-600 tracking-wide">
+                PART 2 — OUR PROJECT
+            </div>
+            <h2 class="font-display font-900 text-4xl text-ink-900 dark:text-ink-100">The DocMS Test Suite Explained</h2>
+            <p class="mt-3 text-ink-500 dark:text-ink-400">A real Temporal worker that extracts text from documents, indexes to Elasticsearch, and updates a backend. Every test explained.</p>
+        </div>
+
+        <!-- DEPENDENCIES -->
+        <section id="dependencies" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">Dependencies</h2>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm border border-ink-200 dark:border-ink-800 rounded-lg overflow-hidden">
+                    <thead class="bg-ink-100 dark:bg-ink-900">
+                        <tr>
+                            <th class="text-left px-4 py-2 font-mono font-600">Package</th>
+                            <th class="text-left px-4 py-2 font-600">Purpose</th>
+                            <th class="text-left px-4 py-2 font-600">Used By</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-ink-200 dark:divide-ink-800">
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">pytest</td><td class="px-4 py-2">Test framework</td><td class="px-4 py-2 text-ink-400">All tests</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">pytest-asyncio</td><td class="px-4 py-2">Async test support (<code class="text-xs font-mono">async def test_...</code>)</td><td class="px-4 py-2 text-ink-400">Activity &amp; workflow tests</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">pytest-cov</td><td class="px-4 py-2">Code coverage reporting</td><td class="px-4 py-2 text-ink-400">run_tests.sh / .bat</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">pytest-mock</td><td class="px-4 py-2">Convenient mock fixtures</td><td class="px-4 py-2 text-ink-400">conftest.py</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">httpx</td><td class="px-4 py-2">HTTP client (mocked in tests)</td><td class="px-4 py-2 text-ink-400">update_document_status</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">elasticsearch</td><td class="px-4 py-2">ES client (mocked in tests)</td><td class="px-4 py-2 text-ink-400">index_to_elasticsearch</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">temporalio</td><td class="px-4 py-2">Temporal SDK (activities, workflows)</td><td class="px-4 py-2 text-ink-400">All workflow/activity code</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">pydantic</td><td class="px-4 py-2">Data validation (transitive dep of temporalio)</td><td class="px-4 py-2 text-ink-400">Indirect</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4 mt-4">
+                <div class="text-xs font-mono text-ink-400 mb-2">Install everything at once</div>
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code>pip install -r requirements-test.txt</code></pre>
+            </div>
+        </section>
+
+        <!-- PROJECT STRUCTURE -->
+        <section id="project-structure" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">Project Structure</h2>
+
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code>worker/
+├── <span class="text-sky-600 dark:text-sky-400">shared.py</span>              <span class="text-ink-400"># Dataclasses: DocumentTask, ExtractionResult, IndexResult</span>
+├── <span class="text-sky-600 dark:text-sky-400">activities.py</span>          <span class="text-ink-400"># Temporal activities (extract, index, update status)</span>
+├── <span class="text-sky-600 dark:text-sky-400">workflows.py</span>           <span class="text-ink-400"># Temporal workflow orchestration</span>
+├── <span class="text-sky-600 dark:text-sky-400">worker.py</span>              <span class="text-ink-400"># Monolith: extractors + activities + workflow + entry point</span>
+├── <span class="text-sky-600 dark:text-sky-400">run_worker.py</span>          <span class="text-ink-400"># Standalone entry point</span>
+│
+├── <span class="text-leaf-600 dark:text-leaf-400">conftest.py</span>            <span class="text-ink-400"># Shared fixtures (auto-loaded by pytest)</span>
+├── <span class="text-leaf-600 dark:text-leaf-400">test_shared.py</span>         <span class="text-ink-400"># 11 tests</span>
+├── <span class="text-leaf-600 dark:text-leaf-400">test_activities.py</span>     <span class="text-ink-400"># 17 tests</span>
+├── <span class="text-leaf-600 dark:text-leaf-400">test_workflows.py</span>      <span class="text-ink-400">#  4 tests</span>
+├── <span class="text-leaf-600 dark:text-leaf-400">test_worker.py</span>         <span class="text-ink-400"># 50 tests</span>
+├── <span class="text-leaf-600 dark:text-leaf-400">test_run_worker.py</span>     <span class="text-ink-400">#  4 tests</span>
+│
+├── <span class="text-ember-600 dark:text-ember-400">pyproject.toml</span>         <span class="text-ink-400"># Pytest + coverage config</span>
+├── <span class="text-ember-600 dark:text-ember-400">requirements-test.txt</span>  <span class="text-ink-400"># Pinned test dependencies</span>
+├── <span class="text-ember-600 dark:text-ember-400">run_tests.sh</span>           <span class="text-ink-400"># Linux/macOS runner</span>
+└── <span class="text-ember-600 dark:text-ember-400">run_tests.bat</span>          <span class="text-ink-400"># Windows runner</span></code></pre>
+            </div>
+        </section>
+
+        <!-- TEST_SHARED -->
+        <section id="test-shared" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">test_shared.py <span class="text-lg font-mono text-ink-400">(11 tests)</span></h2>
+            <p class="mb-4 leading-relaxed">Tests for the three dataclasses. Simple but essential — verifies construction, defaults, equality, and error handling.</p>
+
+            <div class="space-y-4">
+                <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <h4 class="font-mono text-sm font-600 text-leaf-600 dark:text-leaf-400 mb-2">TestDocumentTask</h4>
+                    <ul class="text-sm space-y-1 text-ink-600 dark:text-ink-400">
+                        <li><code class="font-mono text-xs text-ink-500">test_create_with_all_fields</code> — Creates a task with all 6 fields, asserts each one.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_equality</code> — Two tasks with identical data are equal (<code class="text-xs font-mono">==</code>).</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_inequality</code> — Different document_id means not equal.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_missing_field_raises</code> — Missing required fields raise <code class="text-xs font-mono">TypeError</code>.</li>
+                    </ul>
+                </div>
+
+                <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <h4 class="font-mono text-sm font-600 text-leaf-600 dark:text-leaf-400 mb-2">TestExtractionResult</h4>
+                    <ul class="text-sm space-y-1 text-ink-600 dark:text-ink-400">
+                        <li><code class="font-mono text-xs text-ink-500">test_success_result</code> — Verifies success=True, char_count, default error="".</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_failure_result_with_error</code> — Verifies error message is stored.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_default_error_is_empty_string</code> — The <code class="text-xs font-mono">error</code> field defaults to "".</li>
+                    </ul>
+                </div>
+
+                <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <h4 class="font-mono text-sm font-600 text-leaf-600 dark:text-leaf-400 mb-2">TestIndexResult</h4>
+                    <ul class="text-sm space-y-1 text-ink-600 dark:text-ink-400">
+                        <li><code class="font-mono text-xs text-ink-500">test_indexed_success</code> — indexed=True, error is empty.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_indexed_failure</code> — indexed=False with error message.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_default_error_is_empty</code> — Confirms the default.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- TEST_ACTIVITIES -->
+        <section id="test-activities" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">test_activities.py <span class="text-lg font-mono text-ink-400">(17 tests)</span></h2>
+            <p class="mb-4 leading-relaxed">Tests the Temporal activities that use <code class="px-1.5 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-sm">unstructured</code> for extraction, Elasticsearch for indexing, and httpx for status updates.</p>
+
+            <div class="space-y-4">
+                <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <h4 class="font-mono text-sm font-600 text-leaf-600 dark:text-leaf-400 mb-2">TestExtractTextActivity (5 tests)</h4>
+                    <ul class="text-sm space-y-1 text-ink-600 dark:text-ink-400">
+                        <li><code class="font-mono text-xs text-ink-500">test_file_not_found_returns_failure</code> — Passes a nonexistent path. Asserts success=False and error message.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_successful_extraction</code> — Mocks _extract_with_unstructured, verifies success, text, and char_count.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_extraction_exception_returns_failure</code> — Simulates a crash inside the extractor. Verifies graceful error handling.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_extraction_strips_whitespace</code> — Ensures .strip() is called on extracted text.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_heartbeat_called</code> — Verifies activity.heartbeat() is called (keeps Temporal informed).</li>
+                    </ul>
+                </div>
+
+                <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <h4 class="font-mono text-sm font-600 text-leaf-600 dark:text-leaf-400 mb-2">TestExtractWithUnstructured (3 tests)</h4>
+                    <p class="text-xs text-ink-400 mb-2">Uses <code class="font-mono text-xs">patch.dict("sys.modules")</code> to inject a mock <code class="font-mono text-xs">unstructured</code> module — the real library is not installed in the test environment.</p>
+                    <ul class="text-sm space-y-1 text-ink-600 dark:text-ink-400">
+                        <li><code class="font-mono text-xs text-ink-500">test_joins_element_texts</code> — Two elements → joined with \n\n.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_empty_elements_returns_no_content</code> — No elements → "(no content extracted)".</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_skips_empty_text_elements</code> — Whitespace-only and attribute-less elements are filtered out.</li>
+                    </ul>
+                </div>
+
+                <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <h4 class="font-mono text-sm font-600 text-leaf-600 dark:text-leaf-400 mb-2">TestIndexToElasticsearch (5 tests)</h4>
+                    <ul class="text-sm space-y-1 text-ink-600 dark:text-ink-400">
+                        <li><code class="font-mono text-xs text-ink-500">test_successful_indexing</code> — Mocks ES client, verifies es.index() called with correct index/id.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_skips_indexing_when_extraction_failed</code> — Failed extraction → indexed=False.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_skips_indexing_when_no_text</code> — Empty text even with success=True → skip.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_es_exception_returns_failure</code> — ConnectionError → graceful IndexResult with error.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_indexed_document_contains_classification</code> — Verifies the ES document body has classification, user_id.</li>
+                    </ul>
+                </div>
+
+                <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <h4 class="font-mono text-sm font-600 text-leaf-600 dark:text-leaf-400 mb-2">TestUpdateDocumentStatus (4 tests)</h4>
+                    <ul class="text-sm space-y-1 text-ink-600 dark:text-ink-400">
+                        <li><code class="font-mono text-xs text-ink-500">test_successful_status_update</code> — HTTP 200 → returns True.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_non_200_returns_false</code> — HTTP 500 → returns False.</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_network_error_returns_false</code> — ConnectError → returns False (non-fatal).</li>
+                        <li><code class="font-mono text-xs text-ink-500">test_text_truncated_to_50k</code> — 100k text is truncated to 50k in the request body.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- TEST_WORKFLOWS -->
+        <section id="test-workflows" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">test_workflows.py <span class="text-lg font-mono text-ink-400">(4 tests)</span></h2>
+            <p class="mb-4 leading-relaxed">Tests the workflow orchestration logic by mocking <code class="px-1.5 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-sm">workflow.execute_activity</code>. No Temporal server needed.</p>
+
+            <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                <ul class="text-sm space-y-2 text-ink-600 dark:text-ink-400">
+                    <li><code class="font-mono text-xs text-ink-500">test_happy_path_completed</code> — Extract succeeds → index succeeds → status="completed", all 3 activities called.</li>
+                    <li><code class="font-mono text-xs text-ink-500">test_extraction_failure_returns_failed</code> — Extract fails → skips indexing → status="failed", only 2 activities called.</li>
+                    <li><code class="font-mono text-xs text-ink-500">test_index_failure_returns_index_failed</code> — Extract succeeds → index fails → status="index_failed", all 3 called.</li>
+                    <li><code class="font-mono text-xs text-ink-500">test_result_contains_document_id</code> — Result dict always includes the document_id.</li>
+                </ul>
+            </div>
+
+            <div class="rounded-xl bg-ember-500/5 dark:bg-ember-400/5 border border-ember-500/20 dark:border-ember-400/20 p-5 mt-4">
+                <p class="text-sm"><strong class="text-ember-600 dark:text-ember-400">Key technique:</strong> A counter-based mock replaces <code class="px-1 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-xs">workflow.execute_activity</code>. Each call returns the next item from a list, simulating the activity sequence without running real activities.</p>
+            </div>
+        </section>
+
+        <!-- TEST_WORKER -->
+        <section id="test-worker" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">test_worker.py <span class="text-lg font-mono text-ink-400">(50 tests)</span></h2>
+            <p class="mb-4 leading-relaxed">The largest test file — covers every text extractor, the routing logic, all activities, the workflow, and the startup function in <code class="px-1.5 py-0.5 rounded bg-ink-200 dark:bg-ink-800 font-mono text-sm">worker.py</code>.</p>
+
+            <div class="space-y-4">
+                <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <h4 class="font-mono text-sm font-600 text-leaf-600 dark:text-leaf-400 mb-2">Extractor Tests (27 tests)</h4>
+                    <p class="text-sm text-ink-600 dark:text-ink-400 mb-3">Each extractor has its own test class. Libraries like docx, pymupdf, openpyxl, pytesseract are imported <em>inside</em> the functions, so we use <code class="font-mono text-xs">patch.dict("sys.modules")</code> to inject mocks.</p>
+
+                    <div class="grid md:grid-cols-2 gap-3 text-sm">
+                        <div class="rounded-lg bg-ink-50 dark:bg-ink-950 p-3">
+                            <div class="font-mono text-xs text-sky-600 dark:text-sky-400 font-600 mb-1">TestExtractPlaintext (3)</div>
+                            <p class="text-ink-500 text-xs">UTF-8, Latin-1 fallback, ASCII</p>
+                        </div>
+                        <div class="rounded-lg bg-ink-50 dark:bg-ink-950 p-3">
+                            <div class="font-mono text-xs text-sky-600 dark:text-sky-400 font-600 mb-1">TestExtractHtml (2)</div>
+                            <p class="text-ink-500 text-xs">BeautifulSoup path, regex fallback</p>
+                        </div>
+                        <div class="rounded-lg bg-ink-50 dark:bg-ink-950 p-3">
+                            <div class="font-mono text-xs text-sky-600 dark:text-sky-400 font-600 mb-1">TestExtractCsv (3)</div>
+                            <p class="text-ink-500 text-xs">CSV, TSV, 500+ row truncation</p>
+                        </div>
+                        <div class="rounded-lg bg-ink-50 dark:bg-ink-950 p-3">
+                            <div class="font-mono text-xs text-sky-600 dark:text-sky-400 font-600 mb-1">TestExtractDocx (3)</div>
+                            <p class="text-ink-500 text-xs">python-docx, tables, zipfile fallback</p>
+                        </div>
+                        <div class="rounded-lg bg-ink-50 dark:bg-ink-950 p-3">
+                            <div class="font-mono text-xs text-sky-600 dark:text-sky-400 font-600 mb-1">TestExtractPdf (5)</div>
+                            <p class="text-ink-500 text-xs">PyMuPDF, OCR on blank pages, pypdf fallback, no libs</p>
+                        </div>
+                        <div class="rounded-lg bg-ink-50 dark:bg-ink-950 p-3">
+                            <div class="font-mono text-xs text-sky-600 dark:text-sky-400 font-600 mb-1">TestExtractXlsx (2)</div>
+                            <p class="text-ink-500 text-xs">openpyxl success, ImportError fallback</p>
+                        </div>
+                        <div class="rounded-lg bg-ink-50 dark:bg-ink-950 p-3">
+                            <div class="font-mono text-xs text-sky-600 dark:text-sky-400 font-600 mb-1">TestOcrBytes (4)</div>
+                            <p class="text-ink-500 text-xs">Success, empty result, no libs, exception</p>
+                        </div>
+                        <div class="rounded-lg bg-ink-50 dark:bg-ink-950 p-3">
+                            <div class="font-mono text-xs text-sky-600 dark:text-sky-400 font-600 mb-1">TestExtractImageOcr (1)</div>
+                            <p class="text-ink-500 text-xs">Reads file bytes → calls _ocr_bytes</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <h4 class="font-mono text-sm font-600 text-leaf-600 dark:text-leaf-400 mb-2">TestDoExtract — Routing Logic (16 tests)</h4>
+                    <p class="text-sm text-ink-600 dark:text-ink-400 mb-2">Each test patches a single extractor and verifies _do_extract routes to it based on content_type and file extension.</p>
+                    <p class="text-xs text-ink-400">Covers: txt, md, json, xml, html, htm, csv, tsv, docx, pdf, xlsx, xls, png, jpg, yaml, and the unknown-type fallback.</p>
+                </div>
+
+                <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <h4 class="font-mono text-sm font-600 text-leaf-600 dark:text-leaf-400 mb-2">Activity &amp; Workflow &amp; Startup Tests (7 tests)</h4>
+                    <p class="text-sm text-ink-600 dark:text-ink-400">Mirrors test_activities.py and test_workflows.py but for the worker.py versions — same logic, same patterns.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TEST_RUN_WORKER -->
+        <section id="test-run-worker" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">test_run_worker.py <span class="text-lg font-mono text-ink-400">(4 tests)</span></h2>
+
+            <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                <ul class="text-sm space-y-2 text-ink-600 dark:text-ink-400">
+                    <li><code class="font-mono text-xs text-ink-500">test_temporal_connection_failure_exits</code> — Temporal unreachable → sys.exit(1). Uses <code class="font-mono text-xs">pytest.raises(SystemExit)</code>.</li>
+                    <li><code class="font-mono text-xs text-ink-500">test_successful_startup</code> — Mocks Temporal + ES + Worker, verifies worker.run() is called.</li>
+                    <li><code class="font-mono text-xs text-ink-500">test_es_retry_then_success</code> — ES fails twice then succeeds. Tests the retry loop.</li>
+                    <li><code class="font-mono text-xs text-ink-500">test_task_queue_constant</code> — Asserts TASK_QUEUE == "document-processing".</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- CONFTEST -->
+        <section id="conftest" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-4">conftest.py <span class="text-lg font-mono text-ink-400">(shared fixtures)</span></h2>
+            <p class="mb-4 leading-relaxed">This file is auto-loaded by pytest. All fixtures defined here are available to every test file without importing them.</p>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm border border-ink-200 dark:border-ink-800 rounded-lg overflow-hidden">
+                    <thead class="bg-ink-100 dark:bg-ink-900">
+                        <tr>
+                            <th class="text-left px-4 py-2 font-mono font-600">Fixture</th>
+                            <th class="text-left px-4 py-2 font-600">Type</th>
+                            <th class="text-left px-4 py-2 font-600">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-ink-200 dark:divide-ink-800">
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">sample_task</td><td class="px-4 py-2 text-ink-400">Factory</td><td class="px-4 py-2">Returns a function that creates DocumentTask with defaults.</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">success_extraction</td><td class="px-4 py-2 text-ink-400">Factory</td><td class="px-4 py-2">Creates a successful ExtractionResult.</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">failed_extraction</td><td class="px-4 py-2 text-ink-400">Factory</td><td class="px-4 py-2">Creates a failed ExtractionResult with error.</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">tmp_text_file</td><td class="px-4 py-2 text-ink-400">File</td><td class="px-4 py-2">Temporary .txt file with sample content.</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">tmp_csv_file</td><td class="px-4 py-2 text-ink-400">File</td><td class="px-4 py-2">Temporary .csv file with 3 rows.</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">tmp_tsv_file</td><td class="px-4 py-2 text-ink-400">File</td><td class="px-4 py-2">Temporary .tsv file.</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">tmp_html_file</td><td class="px-4 py-2 text-ink-400">File</td><td class="px-4 py-2">Temporary .html file with script/style tags.</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">tmp_json_file</td><td class="px-4 py-2 text-ink-400">File</td><td class="px-4 py-2">Temporary .json file.</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">mock_activity_heartbeat</td><td class="px-4 py-2 text-ink-400">Patch</td><td class="px-4 py-2">Patches <code class="font-mono text-xs">activity.heartbeat</code> so tests run offline.</td></tr>
+                        <tr><td class="px-4 py-2 font-mono text-ember-600 dark:text-ember-400">mock_es</td><td class="px-4 py-2 text-ink-400">Mock</td><td class="px-4 py-2">Pre-configured mock Elasticsearch client.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ─────────────────────────────────────────────── -->
+        <!-- PART 3: REFERENCE                               -->
+        <!-- ─────────────────────────────────────────────── -->
+
+        <!-- BEST PRACTICES -->
+        <section id="best-practices" class="section-reveal mb-16 mt-20 border-t border-ink-200 dark:border-ink-800 pt-12">
+            <div class="inline-block mb-4 px-3 py-1 rounded-full bg-violet-500/10 dark:bg-violet-400/10 text-violet-600 dark:text-violet-400 text-xs font-mono font-600 tracking-wide">
+                PART 3 — REFERENCE
+            </div>
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-6">Best Practices</h2>
+
+            <div class="grid gap-4">
+                <div class="concept-card rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <div class="font-display font-700 text-ink-900 dark:text-ink-100 mb-1">1. One assert per concept</div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400">Each test should verify one behavior. Multiple asserts are fine if they validate the same concept.</p>
+                </div>
+                <div class="concept-card rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <div class="font-display font-700 text-ink-900 dark:text-ink-100 mb-1">2. Name tests descriptively</div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400"><code class="font-mono text-xs">test_file_not_found_returns_failure</code> tells you exactly what it tests, even without reading the code.</p>
+                </div>
+                <div class="concept-card rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <div class="font-display font-700 text-ink-900 dark:text-ink-100 mb-1">3. Use fixtures for setup, not copy-paste</div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400">Put shared setup in conftest.py. Factory fixtures (functions that create objects) are more flexible than static ones.</p>
+                </div>
+                <div class="concept-card rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <div class="font-display font-700 text-ink-900 dark:text-ink-100 mb-1">4. Mock at the boundary, not inside</div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400">Mock external services (HTTP, database, file system), not your own code. Test <em>your</em> logic, fake <em>their</em> responses.</p>
+                </div>
+                <div class="concept-card rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <div class="font-display font-700 text-ink-900 dark:text-ink-100 mb-1">5. Patch where it's <em>used</em>, not where it's defined</div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400"><code class="font-mono text-xs">patch("activities.Elasticsearch")</code> not <code class="font-mono text-xs">patch("elasticsearch.Elasticsearch")</code>. Patch the reference the code actually uses.</p>
+                </div>
+                <div class="concept-card rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <div class="font-display font-700 text-ink-900 dark:text-ink-100 mb-1">6. Test the sad paths</div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400">Happy-path tests aren't enough. Test failures, exceptions, edge cases, empty inputs, and timeouts.</p>
+                </div>
+                <div class="concept-card rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <div class="font-display font-700 text-ink-900 dark:text-ink-100 mb-1">7. Use branch coverage</div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400"><code class="font-mono text-xs">--cov-branch</code> catches untested if/else paths that line coverage misses. Aim for 90%+.</p>
+                </div>
+                <div class="concept-card rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900">
+                    <div class="font-display font-700 text-ink-900 dark:text-ink-100 mb-1">8. Keep tests fast</div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400">Mock I/O, avoid real network calls, use tmp_path instead of real filesystems. Our 86 tests run in ~8 seconds.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHEATSHEET -->
+        <section id="cheatsheet" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-6">Cheat Sheet</h2>
+
+            <div class="code-block rounded-lg bg-ink-100 dark:bg-ink-950 p-4">
+<pre class="font-mono text-sm text-ink-700 dark:text-ink-300"><code><span class="text-ink-400">## ASSERTIONS</span>
+assert x == y                        <span class="text-ink-400"># Equality</span>
+assert x != y                        <span class="text-ink-400"># Inequality</span>
+assert x is True                     <span class="text-ink-400"># Identity</span>
+assert x is not None                 <span class="text-ink-400"># Not None</span>
+assert "text" in string              <span class="text-ink-400"># Substring</span>
+assert item in list                  <span class="text-ink-400"># Membership</span>
+assert len(x) == 5                   <span class="text-ink-400"># Length</span>
+
+<span class="text-ink-400">## EXCEPTIONS</span>
+with pytest.raises(ValueError):      <span class="text-ink-400"># Expect exception</span>
+with pytest.raises(SystemExit) as e: <span class="text-ink-400"># Capture exception info</span>
+    assert e.value.code == 1
+
+<span class="text-ink-400">## FIXTURES</span>
+@pytest.fixture                      <span class="text-ink-400"># Define fixture</span>
+@pytest.fixture(autouse=True)        <span class="text-ink-400"># Auto-apply to all tests</span>
+@pytest.fixture(scope="session")     <span class="text-ink-400"># Run once per session</span>
+def my_fixture():
+    setup()
+    yield value                      <span class="text-ink-400"># yield = teardown after</span>
+    teardown()
+
+<span class="text-ink-400">## MARKERS</span>
+@pytest.mark.asyncio                 <span class="text-ink-400"># Async test</span>
+@pytest.mark.skip(reason="...")      <span class="text-ink-400"># Skip test</span>
+@pytest.mark.skipif(cond, reason="") <span class="text-ink-400"># Conditional skip</span>
+@pytest.mark.parametrize("a,b", ...) <span class="text-ink-400"># Run with multiple inputs</span>
+
+<span class="text-ink-400">## MOCKING</span>
+MagicMock()                          <span class="text-ink-400"># Fake object</span>
+AsyncMock()                          <span class="text-ink-400"># Fake async object</span>
+patch("module.thing")                <span class="text-ink-400"># Replace for duration</span>
+patch.dict("sys.modules", {...})     <span class="text-ink-400"># Inject mock modules</span>
+mock.assert_called_once()            <span class="text-ink-400"># Verify call</span>
+mock.call_args.kwargs["key"]         <span class="text-ink-400"># Inspect arguments</span>
+
+<span class="text-ink-400">## CLI</span>
+pytest -v                            <span class="text-ink-400"># Verbose output</span>
+pytest -x                            <span class="text-ink-400"># Stop on first failure</span>
+pytest -s                            <span class="text-ink-400"># Show print output</span>
+pytest -k "keyword"                  <span class="text-ink-400"># Filter by name</span>
+pytest --tb=short                    <span class="text-ink-400"># Short tracebacks</span>
+pytest --cov=module                  <span class="text-ink-400"># Coverage report</span>
+pytest --cov-branch                  <span class="text-ink-400"># Branch coverage</span></code></pre>
+            </div>
+        </section>
+
+        <!-- RESOURCES -->
+        <section id="resources" class="section-reveal mb-16">
+            <h2 class="font-display font-800 text-3xl text-ink-900 dark:text-ink-100 mb-6">Resources &amp; Links</h2>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <a href="https://docs.pytest.org/en/stable/" target="_blank" class="concept-card block rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900 hover:border-ember-500/50 dark:hover:border-ember-400/50 transition-colors">
+                    <div class="font-display font-700 text-ink-900 dark:text-ink-100 mb-1">Pytest Official Docs ↗</div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400">The complete reference — fixtures, plugins, configuration, CLI flags.</p>
+                    <div class="text-xs font-mono text-ember-500 mt-2">docs.pytest.org</div>
+                </a>
+                <a href="https://docs.pytest.org/en/stable/how-to/fixtures.html" target="_blank" class="concept-card block rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900 hover:border-ember-500/50 dark:hover:border-ember-400/50 transition-colors">
+                    <div class="font-display font-700 text-ink-900 dark:text-ink-100 mb-1">Fixtures Guide ↗</div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400">Deep dive into fixtures — scopes, parametrize, factories, teardown.</p>
+                    <div class="text-xs font-mono text-ember-500 mt-2">docs.pytest.org/fixtures</div>
+                </a>
+                <a href="https://pytest-asyncio.readthedocs.io/en/latest/" target="_blank" class="concept-card block rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900 hover:border-ember-500/50 dark:hover:border-ember-400/50 transition-colors">
+                    <div class="font-display font-700 text-ink-900 dark:text-ink-100 mb-1">pytest-asyncio ↗</div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400">Async test support — auto mode, event loop configuration, async fixtures.</p>
+                    <div class="text-xs font-mono text-ember-500 mt-2">pytest-asyncio.readthedocs.io</div>
+                </a>
+                <a href="https://pytest-cov.readthedocs.io/en/latest/" target="_blank" class="concept-card block rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900 hover:border-ember-500/50 dark:hover:border-ember-400/50 transition-colors">
+                    <div class="font-display font-700 text-ink-900 dark:text-ink-100 mb-1">pytest-cov ↗</div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400">Coverage plugin — report types, branch coverage, fail-under, exclusions.</p>
+                    <div class="text-xs font-mono text-ember-500 mt-2">pytest-cov.readthedocs.io</div>
+                </a>
+                <a href="https://docs.python.org/3/library/unittest.mock.html" target="_blank" class="concept-card block rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900 hover:border-ember-500/50 dark:hover:border-ember-400/50 transition-colors">
+                    <div class="font-display font-700 text-ink-900 dark:text-ink-100 mb-1">unittest.mock ↗</div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400">Python's built-in mock library — MagicMock, patch, AsyncMock, side_effect.</p>
+                    <div class="text-xs font-mono text-ember-500 mt-2">docs.python.org/unittest.mock</div>
+                </a>
+                <a href="https://docs.temporal.io/develop/python/testing-suite" target="_blank" class="concept-card block rounded-xl border border-ink-200 dark:border-ink-800 p-5 bg-white dark:bg-ink-900 hover:border-ember-500/50 dark:hover:border-ember-400/50 transition-colors">
+                    <div class="font-display font-700 text-ink-900 dark:text-ink-100 mb-1">Temporal Python Testing ↗</div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400">Testing Temporal workflows and activities in Python.</p>
+                    <div class="text-xs font-mono text-ember-500 mt-2">docs.temporal.io</div>
+                </a>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="mt-20 pt-8 border-t border-ink-200 dark:border-ink-800 text-center text-sm text-ink-400 dark:text-ink-500">
+            <p>Built for the DocMS worker project. 86 tests. 96.46% coverage.</p>
+            <p class="mt-1 font-mono text-xs">pytest ≥ 8.0 · pytest-asyncio ≥ 0.23 · pytest-cov ≥ 5.0 · Python ≥ 3.10</p>
+        </footer>
+
+    </div>
+</main>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- JAVASCRIPT                                              -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<script>
+// ── Dark / Light Mode Toggle ──────────────────────────────
+const html = document.documentElement;
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+
+function setTheme(dark) {
+    html.classList.toggle('dark', dark);
+    themeIcon.textContent = dark ? '☀️' : '🌙';
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+}
+
+// Init from localStorage or system preference
+const saved = localStorage.getItem('theme');
+if (saved) {
+    setTheme(saved === 'dark');
+} else {
+    setTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
+}
+
+themeToggle.addEventListener('click', () => {
+    setTheme(!html.classList.contains('dark'));
+});
+
+// ── Scroll Reveal ──────────────────────────────────────────
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+        }
+    });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.section-reveal').forEach(el => observer.observe(el));
+
+// ── Active Nav Link ────────────────────────────────────────
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-link');
+
+function updateActiveNav() {
+    let current = '';
+    sections.forEach(section => {
+        const rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+
+    navLinks.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+    });
+}
+
+window.addEventListener('scroll', updateActiveNav, { passive: true });
+updateActiveNav();
+
+// ── Copy Code Buttons ──────────────────────────────────────
+document.querySelectorAll('.code-block').forEach(block => {
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn px-2 py-1 rounded text-xs font-mono bg-ink-200 dark:bg-ink-800 text-ink-500 hover:text-ink-700 dark:hover:text-ink-300 transition-colors';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', () => {
+        const code = block.querySelector('code');
+        navigator.clipboard.writeText(code.textContent).then(() => {
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = 'Copy', 1500);
+        });
+    });
+    block.appendChild(btn);
+});
+
+// ── Mobile Menu ────────────────────────────────────────────
+// Simple: clicking a nav link scrolls to section (already works via anchors)
+</script>
+
+</body>
+</html>
