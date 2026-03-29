@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python &amp; AWS S3 Best Practices Tutorial</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['"Source Serif 4"', 'Georgia', 'serif'],
+            sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            ink: { 50: '#f7f7f5', 100: '#eeeee8', 200: '#d5d3c8', 300: '#b8b4a4', 400: '#9a9580', 500: '#7d7760', 600: '#625d4c', 700: '#4e4a3e', 800: '#3a3832', 900: '#2a2826', 950: '#1a1917' },
+            amber: { 400: '#f6ad55', 500: '#ed8936', 600: '#dd6b20' },
+            teal:  { 400: '#4fd1c5', 500: '#38b2ac', 600: '#319795' },
+            rose:  { 400: '#fc8181', 500: '#f56565' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html { font-size: 17px; }
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+    h1, h2, h3, h4 { font-family: 'Source Serif 4', Georgia, serif; }
+    pre, code { font-family: 'JetBrains Mono', monospace; }
+
+    /* Code block styling */
+    pre {
+      position: relative;
+      overflow-x: auto;
+      tab-size: 4;
+    }
+    pre .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    pre:hover .copy-btn { opacity: 1; }
+
+    /* Syntax highlights — light */
+    .kw  { color: #8250df; }   /* keyword */
+    .fn  { color: #0550ae; }   /* function */
+    .st  { color: #0a3069; }   /* string */
+    .cm  { color: #6e7781; }   /* comment */
+    .dc  { color: #cf222e; }   /* decorator */
+    .ty  { color: #953800; }   /* type / class */
+    .nb  { color: #0550ae; }   /* builtin */
+    .op  { color: #24292f; }   /* operator */
+    .nu  { color: #0550ae; }   /* number */
+
+    /* Syntax highlights — dark */
+    .dark .kw  { color: #d2a8ff; }
+    .dark .fn  { color: #79c0ff; }
+    .dark .st  { color: #a5d6ff; }
+    .dark .cm  { color: #8b949e; }
+    .dark .dc  { color: #ff7b72; }
+    .dark .ty  { color: #ffa657; }
+    .dark .nb  { color: #79c0ff; }
+    .dark .op  { color: #c9d1d9; }
+    .dark .nu  { color: #79c0ff; }
+
+    /* Active nav link */
+    .nav-link.active {
+      border-left-color: #ed8936;
+      color: #ed8936;
+      background: rgba(237, 137, 54, 0.06);
+    }
+    .dark .nav-link.active {
+      border-left-color: #f6ad55;
+      color: #f6ad55;
+      background: rgba(246, 173, 85, 0.08);
+    }
+
+    /* Smooth scroll offset for sticky header */
+    section[id] { scroll-margin-top: 5rem; }
+
+    /* Callout boxes */
+    .callout {
+      border-left: 4px solid;
+      padding: 1rem 1.25rem;
+      border-radius: 0 0.5rem 0.5rem 0;
+    }
+    .callout-tip    { border-color: #38b2ac; background: rgba(56, 178, 172, 0.06); }
+    .callout-warn   { border-color: #ed8936; background: rgba(237, 137, 54, 0.06); }
+    .callout-danger { border-color: #f56565; background: rgba(245, 101, 101, 0.06); }
+    .dark .callout-tip    { background: rgba(56, 178, 172, 0.1); }
+    .dark .callout-warn   { background: rgba(237, 137, 54, 0.1); }
+    .dark .callout-danger { background: rgba(245, 101, 101, 0.1); }
+
+    /* File tab styling */
+    .file-tab {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      border-radius: 0.375rem 0.375rem 0 0;
+      margin-bottom: -1px;
+      position: relative;
+      z-index: 1;
+    }
+  </style>
+</head>
+
+<body class="bg-ink-50 text-ink-900 dark:bg-ink-950 dark:text-ink-100 transition-colors duration-300">
+
+  <!-- ───────── TOP BAR ───────── -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-ink-50/90 dark:bg-ink-950/90 backdrop-blur-md border-b border-ink-200 dark:border-ink-800">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 h-14">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">🪣</span>
+        <span class="font-serif font-bold text-lg tracking-tight">S3 Bucket Manager</span>
+        <span class="hidden sm:inline text-xs font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full ml-2">Python Tutorial</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- Mobile menu button -->
+        <button id="mobileMenuBtn" class="lg:hidden p-2 rounded-lg hover:bg-ink-200 dark:hover:bg-ink-800 transition-colors" aria-label="Toggle menu">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <button id="themeToggle" class="p-2 rounded-lg hover:bg-ink-200 dark:hover:bg-ink-800 transition-colors" aria-label="Toggle dark mode">
+          <svg id="sunIcon" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path stroke-linecap="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <svg id="moonIcon" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex max-w-7xl mx-auto pt-14">
+
+    <!-- ───────── SIDEBAR NAV ───────── -->
+    <nav id="sidebar" class="hidden lg:block fixed top-14 left-0 w-60 xl:w-64 h-[calc(100vh-3.5rem)] overflow-y-auto border-r border-ink-200 dark:border-ink-800 px-4 py-6 bg-ink-50 dark:bg-ink-950 z-40">
+      <p class="text-[0.65rem] uppercase tracking-widest font-semibold text-ink-400 dark:text-ink-500 mb-3">Contents</p>
+      <ul class="space-y-0.5 text-sm" id="navList">
+        <li><a href="#overview"       class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md hover:bg-ink-100 dark:hover:bg-ink-900 transition-colors">Overview</a></li>
+        <li><a href="#setup"          class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md hover:bg-ink-100 dark:hover:bg-ink-900 transition-colors">Project Setup</a></li>
+        <li><a href="#bucket-type"    class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md hover:bg-ink-100 dark:hover:bg-ink-900 transition-colors">BucketType Enum</a></li>
+        <li><a href="#s3manager"      class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md hover:bg-ink-100 dark:hover:bg-ink-900 transition-colors">S3BucketManager Class</a></li>
+        <li><a href="#upload"         class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md hover:bg-ink-100 dark:hover:bg-ink-900 transition-colors">Upload Examples</a></li>
+        <li><a href="#download"       class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md hover:bg-ink-100 dark:hover:bg-ink-900 transition-colors">Download Examples</a></li>
+        <li><a href="#cleanup"        class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md hover:bg-ink-100 dark:hover:bg-ink-900 transition-colors">TEMP Cleanup</a></li>
+        <li><a href="#pytest-basics"  class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md hover:bg-ink-100 dark:hover:bg-ink-900 transition-colors">Pytest Basics</a></li>
+        <li><a href="#pytest-s3"      class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md hover:bg-ink-100 dark:hover:bg-ink-900 transition-colors">Testing with Moto</a></li>
+        <li><a href="#best-practices" class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md hover:bg-ink-100 dark:hover:bg-ink-900 transition-colors">Best Practices</a></li>
+        <li><a href="#resources"      class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md hover:bg-ink-100 dark:hover:bg-ink-900 transition-colors">Resources &amp; Links</a></li>
+      </ul>
+    </nav>
+
+    <!-- ───────── MOBILE NAV OVERLAY ───────── -->
+    <div id="mobileNav" class="fixed inset-0 z-50 hidden lg:hidden">
+      <div class="absolute inset-0 bg-black/40" id="mobileNavOverlay"></div>
+      <nav class="absolute left-0 top-0 h-full w-64 bg-ink-50 dark:bg-ink-950 border-r border-ink-200 dark:border-ink-800 px-4 py-6 pt-20 overflow-y-auto">
+        <p class="text-[0.65rem] uppercase tracking-widest font-semibold text-ink-400 dark:text-ink-500 mb-3">Contents</p>
+        <ul class="space-y-0.5 text-sm" id="mobileNavList">
+          <li><a href="#overview"       class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md">Overview</a></li>
+          <li><a href="#setup"          class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md">Project Setup</a></li>
+          <li><a href="#bucket-type"    class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md">BucketType Enum</a></li>
+          <li><a href="#s3manager"      class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md">S3BucketManager Class</a></li>
+          <li><a href="#upload"         class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md">Upload Examples</a></li>
+          <li><a href="#download"       class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md">Download Examples</a></li>
+          <li><a href="#cleanup"        class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md">TEMP Cleanup</a></li>
+          <li><a href="#pytest-basics"  class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md">Pytest Basics</a></li>
+          <li><a href="#pytest-s3"      class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md">Testing with Moto</a></li>
+          <li><a href="#best-practices" class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md">Best Practices</a></li>
+          <li><a href="#resources"      class="nav-link block py-1.5 px-3 border-l-2 border-transparent rounded-r-md">Resources &amp; Links</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <!-- ───────── MAIN CONTENT ───────── -->
+    <main class="flex-1 lg:ml-60 xl:ml-64 px-4 sm:px-8 lg:px-12 py-10 max-w-4xl">
+
+      <!-- OVERVIEW -->
+      <section id="overview" class="mb-16">
+        <p class="text-sm font-mono text-teal-600 dark:text-teal-400 mb-2">// getting started</p>
+        <h1 class="text-4xl sm:text-5xl font-bold leading-tight mb-4">Python &amp; AWS S3<br/>Best Practices</h1>
+        <p class="text-lg text-ink-600 dark:text-ink-300 leading-relaxed max-w-2xl mb-6">
+          A beginner-friendly guide to building a clean, testable S3 file manager in Python.
+          You'll learn to use an <strong>Enum-based bucket type system</strong> (SAFE vs TEMP),
+          write a reusable class for uploads and downloads, and test everything with <strong>pytest</strong> and <strong>moto</strong>.
+        </p>
+        <div class="flex flex-wrap gap-2 text-xs font-mono">
+          <span class="bg-ink-200 dark:bg-ink-800 px-3 py-1 rounded-full">Python 3.12+</span>
+          <span class="bg-ink-200 dark:bg-ink-800 px-3 py-1 rounded-full">boto3 ~1.42</span>
+          <span class="bg-ink-200 dark:bg-ink-800 px-3 py-1 rounded-full">pytest 9.x</span>
+          <span class="bg-ink-200 dark:bg-ink-800 px-3 py-1 rounded-full">moto 5.x</span>
+        </div>
+      </section>
+
+      <!-- SETUP -->
+      <section id="setup" class="mb-16">
+        <h2 class="text-2xl font-bold mb-4">1 &middot; Project Setup</h2>
+        <p class="mb-4 text-ink-700 dark:text-ink-300">Start by creating a virtual environment and installing the dependencies. Always pin your versions in a <code class="text-sm bg-ink-200 dark:bg-ink-800 px-1.5 py-0.5 rounded">requirements.txt</code>.</p>
+
+        <div class="file-tab bg-ink-200 dark:bg-ink-800 text-ink-600 dark:text-ink-400">terminal</div>
+        <pre class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-b-lg rounded-tr-lg p-4 text-sm leading-relaxed mb-6"><button class="copy-btn bg-ink-200 dark:bg-ink-800 hover:bg-ink-300 dark:hover:bg-ink-700 text-ink-600 dark:text-ink-400 text-xs px-2 py-1 rounded transition-colors" onclick="copyCode(this)">Copy</button><span class="cm"># Create &amp; activate a virtual environment</span>
+python3 -m venv .venv
+source .venv/bin/activate          <span class="cm"># macOS / Linux</span>
+.venv\Scripts\activate             <span class="cm"># Windows</span>
+
+<span class="cm"># Install dependencies</span>
+pip install boto3 pytest moto[s3]</pre>
+
+        <div class="file-tab bg-ink-200 dark:bg-ink-800 text-ink-600 dark:text-ink-400">requirements.txt</div>
+        <pre class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-b-lg rounded-tr-lg p-4 text-sm leading-relaxed mb-6"><button class="copy-btn bg-ink-200 dark:bg-ink-800 hover:bg-ink-300 dark:hover:bg-ink-700 text-ink-600 dark:text-ink-400 text-xs px-2 py-1 rounded transition-colors" onclick="copyCode(this)">Copy</button>boto3&gt;=1.42.0
+pytest&gt;=9.0.0
+moto[s3]&gt;=5.1.0</pre>
+
+        <div class="file-tab bg-ink-200 dark:bg-ink-800 text-ink-600 dark:text-ink-400">project structure</div>
+        <pre class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-b-lg rounded-tr-lg p-4 text-sm leading-relaxed mb-4"><button class="copy-btn bg-ink-200 dark:bg-ink-800 hover:bg-ink-300 dark:hover:bg-ink-700 text-ink-600 dark:text-ink-400 text-xs px-2 py-1 rounded transition-colors" onclick="copyCode(this)">Copy</button>my_s3_project/
+├── src/
+│   ├── __init__.py
+│   ├── bucket_type.py        <span class="cm"># BucketType enum</span>
+│   └── s3_manager.py         <span class="cm"># S3BucketManager class</span>
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py            <span class="cm"># shared pytest fixtures</span>
+│   └── test_s3_manager.py     <span class="cm"># all tests</span>
+├── requirements.txt
+└── pyproject.toml</pre>
+      </section>
+
+      <!-- BUCKET TYPE ENUM -->
+      <section id="bucket-type" class="mb-16">
+        <h2 class="text-2xl font-bold mb-4">2 &middot; The BucketType Enum</h2>
+        <p class="mb-4 text-ink-700 dark:text-ink-300">
+          Using an <code class="text-sm bg-ink-200 dark:bg-ink-800 px-1.5 py-0.5 rounded">Enum</code> keeps bucket categories explicit and prevents typos.
+          Each enum member holds a <strong>prefix</strong> that gets prepended to every bucket name,
+          making it trivial to find and clean up all TEMP buckets later.
+        </p>
+
+        <div class="file-tab bg-ink-200 dark:bg-ink-800 text-ink-600 dark:text-ink-400">src/bucket_type.py</div>
+        <pre class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-b-lg rounded-tr-lg p-4 text-sm leading-relaxed mb-4"><button class="copy-btn bg-ink-200 dark:bg-ink-800 hover:bg-ink-300 dark:hover:bg-ink-700 text-ink-600 dark:text-ink-400 text-xs px-2 py-1 rounded transition-colors" onclick="copyCode(this)">Copy</button><span class="st">"""Enum that defines the two bucket categories."""</span>
+
+<span class="kw">from</span> enum <span class="kw">import</span> Enum
+
+
+<span class="kw">class</span> <span class="ty">BucketType</span>(Enum):
+    <span class="st">"""
+    SAFE  – long-lived storage, never auto-deleted.
+    TEMP  – short-lived storage, cleaned up after use.
+
+    Each member's value is the prefix added to bucket names
+    so you can easily list / filter buckets by type.
+    """</span>
+
+    SAFE = <span class="st">"safe-"</span>
+    TEMP = <span class="st">"temp-"</span>
+
+    <span class="kw">def</span> <span class="fn">make_bucket_name</span>(self, name: <span class="nb">str</span>) -&gt; <span class="nb">str</span>:
+        <span class="st">"""Build the full bucket name: prefix + user-supplied name."""</span>
+        <span class="kw">return</span> <span class="st">f"</span>{self.value}{name}<span class="st">"</span></pre>
+
+        <div class="callout callout-tip mb-4">
+          <p class="text-sm"><strong>💡 Why an Enum?</strong> &mdash;
+            Enums are safer than plain strings. Your IDE will autocomplete <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">BucketType.TEMP</code>,
+            and a typo like <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">BucketType.TMP</code> will raise an <code class="text-xs">AttributeError</code> immediately instead of silently creating the wrong bucket.
+          </p>
+        </div>
+      </section>
+
+      <!-- S3 MANAGER CLASS -->
+      <section id="s3manager" class="mb-16">
+        <h2 class="text-2xl font-bold mb-4">3 &middot; The S3BucketManager Class</h2>
+        <p class="mb-4 text-ink-700 dark:text-ink-300">
+          This class wraps all S3 operations behind a clean interface.
+          It accepts a <code class="text-sm bg-ink-200 dark:bg-ink-800 px-1.5 py-0.5 rounded">BucketType</code> and a name, then
+          handles upload, download, listing, and cleanup.
+        </p>
+
+        <div class="file-tab bg-ink-200 dark:bg-ink-800 text-ink-600 dark:text-ink-400">src/s3_manager.py</div>
+        <pre class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-b-lg rounded-tr-lg p-4 text-sm leading-relaxed mb-4"><button class="copy-btn bg-ink-200 dark:bg-ink-800 hover:bg-ink-300 dark:hover:bg-ink-700 text-ink-600 dark:text-ink-400 text-xs px-2 py-1 rounded transition-colors" onclick="copyCode(this)">Copy</button><span class="st">"""Reusable S3 bucket manager with SAFE / TEMP support."""</span>
+
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+
+<span class="kw">import</span> logging
+<span class="kw">from</span> pathlib <span class="kw">import</span> Path
+
+<span class="kw">import</span> boto3
+<span class="kw">from</span> botocore.exceptions <span class="kw">import</span> ClientError
+
+<span class="kw">from</span> .bucket_type <span class="kw">import</span> BucketType
+
+logger = logging.getLogger(__name__)
+
+
+<span class="kw">class</span> <span class="ty">S3BucketManager</span>:
+    <span class="st">"""Manage uploads, downloads, and cleanup for a single S3 bucket.
+
+    Args:
+        bucket_type: Whether this is a SAFE or TEMP bucket.
+        name:        A short, descriptive name (e.g. "reports", "uploads").
+        region:      AWS region for the bucket.  Defaults to us-east-1.
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(
+        self,
+        bucket_type: BucketType,
+        name: <span class="nb">str</span>,
+        region: <span class="nb">str</span> = <span class="st">"us-east-1"</span>,
+    ) -&gt; <span class="nb">None</span>:
+        self.bucket_type = bucket_type
+        self.bucket_name = bucket_type.make_bucket_name(name)
+        self.region = region
+        self._client = boto3.client(<span class="st">"s3"</span>, region_name=region)
+
+    <span class="cm"># ── Bucket lifecycle ──────────────────────────────────</span>
+
+    <span class="kw">def</span> <span class="fn">create_bucket</span>(self) -&gt; <span class="nb">None</span>:
+        <span class="st">"""Create the S3 bucket if it does not already exist."""</span>
+        <span class="kw">try</span>:
+            <span class="kw">if</span> self.region == <span class="st">"us-east-1"</span>:
+                self._client.create_bucket(Bucket=self.bucket_name)
+            <span class="kw">else</span>:
+                self._client.create_bucket(
+                    Bucket=self.bucket_name,
+                    CreateBucketConfiguration={
+                        <span class="st">"LocationConstraint"</span>: self.region,
+                    },
+                )
+            logger.info(<span class="st">"Created bucket %s"</span>, self.bucket_name)
+        <span class="kw">except</span> ClientError <span class="kw">as</span> exc:
+            <span class="kw">if</span> exc.response[<span class="st">"Error"</span>][<span class="st">"Code"</span>] == <span class="st">"BucketAlreadyOwnedByYou"</span>:
+                logger.info(<span class="st">"Bucket %s already exists"</span>, self.bucket_name)
+            <span class="kw">else</span>:
+                <span class="kw">raise</span>
+
+    <span class="cm"># ── Upload ────────────────────────────────────────────</span>
+
+    <span class="kw">def</span> <span class="fn">upload_file</span>(
+        self, local_path: <span class="nb">str</span> | Path, s3_key: <span class="nb">str</span> | <span class="nb">None</span> = <span class="nb">None</span>,
+    ) -&gt; <span class="nb">str</span>:
+        <span class="st">"""Upload a local file to the bucket.
+
+        Args:
+            local_path: Path to the file on disk.
+            s3_key:     Object key in S3.  Defaults to the filename.
+
+        Returns:
+            The S3 key that was written.
+        """</span>
+        local_path = Path(local_path)
+        <span class="kw">if</span> <span class="kw">not</span> local_path.is_file():
+            <span class="kw">raise</span> FileNotFoundError(<span class="st">f"No such file: </span>{local_path}<span class="st">"</span>)
+
+        key = s3_key <span class="kw">or</span> local_path.name
+        self._client.upload_file(
+            Filename=<span class="nb">str</span>(local_path),
+            Bucket=self.bucket_name,
+            Key=key,
+        )
+        logger.info(<span class="st">"Uploaded %s → s3://%s/%s"</span>, local_path, self.bucket_name, key)
+        <span class="kw">return</span> key
+
+    <span class="kw">def</span> <span class="fn">upload_bytes</span>(
+        self, data: <span class="nb">bytes</span>, s3_key: <span class="nb">str</span>,
+    ) -&gt; <span class="nb">str</span>:
+        <span class="st">"""Upload raw bytes directly to S3."""</span>
+        self._client.put_object(
+            Bucket=self.bucket_name, Key=s3_key, Body=data,
+        )
+        logger.info(<span class="st">"Uploaded %d bytes → s3://%s/%s"</span>, <span class="nb">len</span>(data), self.bucket_name, s3_key)
+        <span class="kw">return</span> s3_key
+
+    <span class="cm"># ── Download ──────────────────────────────────────────</span>
+
+    <span class="kw">def</span> <span class="fn">download_file</span>(
+        self, s3_key: <span class="nb">str</span>, local_path: <span class="nb">str</span> | Path,
+    ) -&gt; Path:
+        <span class="st">"""Download an S3 object to a local file.
+
+        Returns:
+            The Path of the downloaded file.
+        """</span>
+        local_path = Path(local_path)
+        local_path.parent.mkdir(parents=<span class="nb">True</span>, exist_ok=<span class="nb">True</span>)
+        self._client.download_file(
+            Bucket=self.bucket_name, Key=s3_key, Filename=<span class="nb">str</span>(local_path),
+        )
+        logger.info(<span class="st">"Downloaded s3://%s/%s → %s"</span>, self.bucket_name, s3_key, local_path)
+        <span class="kw">return</span> local_path
+
+    <span class="kw">def</span> <span class="fn">download_bytes</span>(self, s3_key: <span class="nb">str</span>) -&gt; <span class="nb">bytes</span>:
+        <span class="st">"""Download an S3 object as raw bytes."""</span>
+        response = self._client.get_object(
+            Bucket=self.bucket_name, Key=s3_key,
+        )
+        <span class="kw">return</span> response[<span class="st">"Body"</span>].read()
+
+    <span class="cm"># ── Listing ───────────────────────────────────────────</span>
+
+    <span class="kw">def</span> <span class="fn">list_objects</span>(self, prefix: <span class="nb">str</span> = <span class="st">""</span>) -&gt; <span class="nb">list</span>[<span class="nb">str</span>]:
+        <span class="st">"""Return a list of S3 keys in the bucket."""</span>
+        paginator = self._client.get_paginator(<span class="st">"list_objects_v2"</span>)
+        keys: <span class="nb">list</span>[<span class="nb">str</span>] = []
+        <span class="kw">for</span> page <span class="kw">in</span> paginator.paginate(Bucket=self.bucket_name, Prefix=prefix):
+            <span class="kw">for</span> obj <span class="kw">in</span> page.get(<span class="st">"Contents"</span>, []):
+                keys.append(obj[<span class="st">"Key"</span>])
+        <span class="kw">return</span> keys
+
+    <span class="cm"># ── Cleanup (TEMP buckets only) ───────────────────────</span>
+
+    <span class="kw">def</span> <span class="fn">cleanup</span>(self) -&gt; <span class="nb">int</span>:
+        <span class="st">"""Delete ALL objects in a TEMP bucket.
+
+        Raises:
+            ValueError: If called on a SAFE bucket.
+
+        Returns:
+            The number of objects deleted.
+        """</span>
+        <span class="kw">if</span> self.bucket_type <span class="kw">is not</span> BucketType.TEMP:
+            <span class="kw">raise</span> ValueError(
+                <span class="st">f"cleanup() is only allowed on TEMP buckets, "</span>
+                <span class="st">f"got </span>{self.bucket_type.name}<span class="st">"</span>
+            )
+
+        keys = self.list_objects()
+        <span class="kw">if not</span> keys:
+            logger.info(<span class="st">"Bucket %s is already empty"</span>, self.bucket_name)
+            <span class="kw">return</span> <span class="nu">0</span>
+
+        <span class="cm"># S3 delete_objects accepts up to 1 000 keys at a time</span>
+        deleted = <span class="nu">0</span>
+        <span class="kw">for</span> i <span class="kw">in</span> <span class="nb">range</span>(<span class="nu">0</span>, <span class="nb">len</span>(keys), <span class="nu">1000</span>):
+            batch = keys[i : i + <span class="nu">1000</span>]
+            self._client.delete_objects(
+                Bucket=self.bucket_name,
+                Delete={<span class="st">"Objects"</span>: [{<span class="st">"Key"</span>: k} <span class="kw">for</span> k <span class="kw">in</span> batch]},
+            )
+            deleted += <span class="nb">len</span>(batch)
+
+        logger.info(<span class="st">"Cleaned up %d objects from %s"</span>, deleted, self.bucket_name)
+        <span class="kw">return</span> deleted</pre>
+      </section>
+
+      <!-- UPLOAD EXAMPLES -->
+      <section id="upload" class="mb-16">
+        <h2 class="text-2xl font-bold mb-4">4 &middot; Upload Examples</h2>
+        <p class="mb-4 text-ink-700 dark:text-ink-300">Here are standalone functions that show how to use the manager in real application code.</p>
+
+        <div class="file-tab bg-ink-200 dark:bg-ink-800 text-ink-600 dark:text-ink-400">examples/upload_examples.py</div>
+        <pre class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-b-lg rounded-tr-lg p-4 text-sm leading-relaxed mb-4"><button class="copy-btn bg-ink-200 dark:bg-ink-800 hover:bg-ink-300 dark:hover:bg-ink-700 text-ink-600 dark:text-ink-400 text-xs px-2 py-1 rounded transition-colors" onclick="copyCode(this)">Copy</button><span class="st">"""Upload helpers that use S3BucketManager."""</span>
+
+<span class="kw">from</span> src.bucket_type <span class="kw">import</span> BucketType
+<span class="kw">from</span> src.s3_manager <span class="kw">import</span> S3BucketManager
+
+
+<span class="kw">def</span> <span class="fn">upload_report_to_safe_bucket</span>(filepath: <span class="nb">str</span>) -&gt; <span class="nb">str</span>:
+    <span class="st">"""Upload a report to the long-lived SAFE bucket."""</span>
+    manager = S3BucketManager(BucketType.SAFE, <span class="st">"reports"</span>)
+    manager.create_bucket()
+    <span class="kw">return</span> manager.upload_file(filepath)
+
+
+<span class="kw">def</span> <span class="fn">upload_csv_to_temp_bucket</span>(filepath: <span class="nb">str</span>) -&gt; <span class="nb">str</span>:
+    <span class="st">"""Upload a CSV to a TEMP bucket for processing."""</span>
+    manager = S3BucketManager(BucketType.TEMP, <span class="st">"csv-imports"</span>)
+    manager.create_bucket()
+    <span class="kw">return</span> manager.upload_file(filepath, s3_key=<span class="st">"incoming/data.csv"</span>)
+
+
+<span class="kw">def</span> <span class="fn">upload_raw_json</span>(payload: <span class="nb">bytes</span>) -&gt; <span class="nb">str</span>:
+    <span class="st">"""Upload raw JSON bytes to a TEMP bucket."""</span>
+    manager = S3BucketManager(BucketType.TEMP, <span class="st">"api-payloads"</span>)
+    manager.create_bucket()
+    <span class="kw">return</span> manager.upload_bytes(payload, s3_key=<span class="st">"payload.json"</span>)
+
+
+<span class="cm"># ── Quick demo ────────────────────────────────────────</span>
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    key = upload_report_to_safe_bucket(<span class="st">"quarterly_report.pdf"</span>)
+    <span class="nb">print</span>(<span class="st">f"Uploaded to SAFE bucket with key: </span>{key}<span class="st">"</span>)</pre>
+      </section>
+
+      <!-- DOWNLOAD EXAMPLES -->
+      <section id="download" class="mb-16">
+        <h2 class="text-2xl font-bold mb-4">5 &middot; Download Examples</h2>
+
+        <div class="file-tab bg-ink-200 dark:bg-ink-800 text-ink-600 dark:text-ink-400">examples/download_examples.py</div>
+        <pre class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-b-lg rounded-tr-lg p-4 text-sm leading-relaxed mb-4"><button class="copy-btn bg-ink-200 dark:bg-ink-800 hover:bg-ink-300 dark:hover:bg-ink-700 text-ink-600 dark:text-ink-400 text-xs px-2 py-1 rounded transition-colors" onclick="copyCode(this)">Copy</button><span class="st">"""Download helpers that use S3BucketManager."""</span>
+
+<span class="kw">from</span> pathlib <span class="kw">import</span> Path
+<span class="kw">from</span> src.bucket_type <span class="kw">import</span> BucketType
+<span class="kw">from</span> src.s3_manager <span class="kw">import</span> S3BucketManager
+
+
+<span class="kw">def</span> <span class="fn">download_report</span>(s3_key: <span class="nb">str</span>, dest: <span class="nb">str</span> = <span class="st">"./downloads"</span>) -&gt; Path:
+    <span class="st">"""Download a report from the SAFE bucket to a local folder."""</span>
+    manager = S3BucketManager(BucketType.SAFE, <span class="st">"reports"</span>)
+    local_path = Path(dest) / s3_key
+    <span class="kw">return</span> manager.download_file(s3_key, local_path)
+
+
+<span class="kw">def</span> <span class="fn">download_temp_csv_as_bytes</span>(s3_key: <span class="nb">str</span>) -&gt; <span class="nb">bytes</span>:
+    <span class="st">"""Download a CSV from the TEMP bucket as raw bytes."""</span>
+    manager = S3BucketManager(BucketType.TEMP, <span class="st">"csv-imports"</span>)
+    <span class="kw">return</span> manager.download_bytes(s3_key)
+
+
+<span class="kw">def</span> <span class="fn">list_and_download_all</span>(bucket_type: BucketType, name: <span class="nb">str</span>, dest: <span class="nb">str</span>) -&gt; <span class="nb">list</span>[Path]:
+    <span class="st">"""List every object in a bucket, then download them all."""</span>
+    manager = S3BucketManager(bucket_type, name)
+    paths: <span class="nb">list</span>[Path] = []
+    <span class="kw">for</span> key <span class="kw">in</span> manager.list_objects():
+        paths.append(manager.download_file(key, Path(dest) / key))
+    <span class="kw">return</span> paths</pre>
+      </section>
+
+      <!-- CLEANUP -->
+      <section id="cleanup" class="mb-16">
+        <h2 class="text-2xl font-bold mb-4">6 &middot; TEMP Bucket Cleanup</h2>
+        <p class="mb-4 text-ink-700 dark:text-ink-300">
+          The <code class="text-sm bg-ink-200 dark:bg-ink-800 px-1.5 py-0.5 rounded">cleanup()</code> method deletes every object in a TEMP bucket.
+          It <strong>refuses to run</strong> on SAFE buckets — a guardrail built right into the class.
+        </p>
+
+        <div class="file-tab bg-ink-200 dark:bg-ink-800 text-ink-600 dark:text-ink-400">examples/cleanup_example.py</div>
+        <pre class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-b-lg rounded-tr-lg p-4 text-sm leading-relaxed mb-6"><button class="copy-btn bg-ink-200 dark:bg-ink-800 hover:bg-ink-300 dark:hover:bg-ink-700 text-ink-600 dark:text-ink-400 text-xs px-2 py-1 rounded transition-colors" onclick="copyCode(this)">Copy</button><span class="st">"""Example: process a file then clean up the TEMP bucket."""</span>
+
+<span class="kw">from</span> src.bucket_type <span class="kw">import</span> BucketType
+<span class="kw">from</span> src.s3_manager <span class="kw">import</span> S3BucketManager
+
+
+<span class="kw">def</span> <span class="fn">process_and_cleanup</span>(filepath: <span class="nb">str</span>) -&gt; <span class="nb">None</span>:
+    <span class="st">"""Upload → process → clean up.  A typical TEMP bucket lifecycle."""</span>
+    manager = S3BucketManager(BucketType.TEMP, <span class="st">"processing"</span>)
+    manager.create_bucket()
+
+    <span class="cm"># 1. Upload</span>
+    key = manager.upload_file(filepath)
+
+    <span class="cm"># 2. Do your processing…</span>
+    data = manager.download_bytes(key)
+    result = data.upper()  <span class="cm"># placeholder for real work</span>
+    <span class="nb">print</span>(<span class="st">f"Processed </span>{<span class="nb">len</span>(result)}<span class="st"> bytes"</span>)
+
+    <span class="cm"># 3. Clean up all temp files</span>
+    deleted = manager.cleanup()
+    <span class="nb">print</span>(<span class="st">f"Removed </span>{deleted}<span class="st"> temp objects"</span>)
+
+
+<span class="cm"># This will RAISE a ValueError — SAFE buckets can't be cleaned:</span>
+<span class="cm"># safe_mgr = S3BucketManager(BucketType.SAFE, "reports")</span>
+<span class="cm"># safe_mgr.cleanup()  → ValueError!</span></pre>
+
+        <div class="callout callout-warn">
+          <p class="text-sm"><strong>⚠️ Safety guard</strong> &mdash;
+            Calling <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">cleanup()</code> on a
+            <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">BucketType.SAFE</code> bucket
+            will always raise a <code class="text-xs">ValueError</code>. This prevents accidental data loss.
+          </p>
+        </div>
+      </section>
+
+      <!-- PYTEST BASICS -->
+      <section id="pytest-basics" class="mb-16">
+        <h2 class="text-2xl font-bold mb-4">7 &middot; Pytest Basics</h2>
+        <p class="mb-4 text-ink-700 dark:text-ink-300">
+          If you're new to pytest, here's the essentials. Pytest discovers any file named
+          <code class="text-sm bg-ink-200 dark:bg-ink-800 px-1.5 py-0.5 rounded">test_*.py</code> and runs every function
+          whose name starts with <code class="text-sm bg-ink-200 dark:bg-ink-800 px-1.5 py-0.5 rounded">test_</code>.
+        </p>
+
+        <h3 class="text-lg font-semibold mt-6 mb-3">Writing your first test</h3>
+        <div class="file-tab bg-ink-200 dark:bg-ink-800 text-ink-600 dark:text-ink-400">tests/test_demo.py</div>
+        <pre class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-b-lg rounded-tr-lg p-4 text-sm leading-relaxed mb-6"><button class="copy-btn bg-ink-200 dark:bg-ink-800 hover:bg-ink-300 dark:hover:bg-ink-700 text-ink-600 dark:text-ink-400 text-xs px-2 py-1 rounded transition-colors" onclick="copyCode(this)">Copy</button><span class="cm"># A plain function — no classes or boilerplate needed</span>
+
+<span class="kw">def</span> <span class="fn">test_addition</span>():
+    <span class="kw">assert</span> <span class="nu">1</span> + <span class="nu">1</span> == <span class="nu">2</span>
+
+
+<span class="kw">def</span> <span class="fn">test_string_upper</span>():
+    <span class="kw">assert</span> <span class="st">"hello"</span>.upper() == <span class="st">"HELLO"</span></pre>
+
+        <h3 class="text-lg font-semibold mt-6 mb-3">Running tests</h3>
+        <div class="file-tab bg-ink-200 dark:bg-ink-800 text-ink-600 dark:text-ink-400">terminal</div>
+        <pre class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-b-lg rounded-tr-lg p-4 text-sm leading-relaxed mb-6"><button class="copy-btn bg-ink-200 dark:bg-ink-800 hover:bg-ink-300 dark:hover:bg-ink-700 text-ink-600 dark:text-ink-400 text-xs px-2 py-1 rounded transition-colors" onclick="copyCode(this)">Copy</button><span class="cm"># Run all tests</span>
+pytest
+
+<span class="cm"># Verbose output (shows each test name)</span>
+pytest -v
+
+<span class="cm"># Run only tests in one file</span>
+pytest tests/test_s3_manager.py
+
+<span class="cm"># Run a single test by name</span>
+pytest -k "test_upload"
+
+<span class="cm"># Stop on first failure</span>
+pytest -x</pre>
+
+        <h3 class="text-lg font-semibold mt-6 mb-3">Fixtures — reusable test setup</h3>
+        <p class="mb-4 text-ink-700 dark:text-ink-300">
+          Fixtures let you share setup code between tests. Define them in
+          <code class="text-sm bg-ink-200 dark:bg-ink-800 px-1.5 py-0.5 rounded">conftest.py</code>
+          so every test file can use them automatically.
+        </p>
+
+        <div class="file-tab bg-ink-200 dark:bg-ink-800 text-ink-600 dark:text-ink-400">tests/conftest.py</div>
+        <pre class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-b-lg rounded-tr-lg p-4 text-sm leading-relaxed mb-6"><button class="copy-btn bg-ink-200 dark:bg-ink-800 hover:bg-ink-300 dark:hover:bg-ink-700 text-ink-600 dark:text-ink-400 text-xs px-2 py-1 rounded transition-colors" onclick="copyCode(this)">Copy</button><span class="kw">import</span> pytest
+
+
+<span class="dc">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">sample_text</span>():
+    <span class="st">"""Provide some sample text for tests."""</span>
+    <span class="kw">return</span> <span class="st">"Hello, S3!"</span>
+
+
+<span class="dc">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">tmp_file</span>(tmp_path):
+    <span class="st">"""Create a temporary file with some content."""</span>
+    file = tmp_path / <span class="st">"test_upload.txt"</span>
+    file.write_text(<span class="st">"some file content"</span>)
+    <span class="kw">return</span> file</pre>
+
+        <h3 class="text-lg font-semibold mt-6 mb-3">Testing for expected errors</h3>
+        <div class="file-tab bg-ink-200 dark:bg-ink-800 text-ink-600 dark:text-ink-400">test example</div>
+        <pre class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-b-lg rounded-tr-lg p-4 text-sm leading-relaxed mb-4"><button class="copy-btn bg-ink-200 dark:bg-ink-800 hover:bg-ink-300 dark:hover:bg-ink-700 text-ink-600 dark:text-ink-400 text-xs px-2 py-1 rounded transition-colors" onclick="copyCode(this)">Copy</button><span class="kw">import</span> pytest
+
+
+<span class="kw">def</span> <span class="fn">test_divide_by_zero</span>():
+    <span class="st">"""Verify that dividing by zero raises the right error."""</span>
+    <span class="kw">with</span> pytest.raises(ZeroDivisionError):
+        _ = <span class="nu">1</span> / <span class="nu">0</span></pre>
+
+        <div class="callout callout-tip mb-4">
+          <p class="text-sm"><strong>💡 Pytest tip</strong> &mdash;
+            Use <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">pytest.raises()</code> to assert that code raises a specific exception.
+            This is how we'll verify that <code class="text-xs">cleanup()</code> rejects SAFE buckets.
+          </p>
+        </div>
+      </section>
+
+      <!-- PYTEST + MOTO -->
+      <section id="pytest-s3" class="mb-16">
+        <h2 class="text-2xl font-bold mb-4">8 &middot; Testing S3 Code with Moto</h2>
+        <p class="mb-4 text-ink-700 dark:text-ink-300">
+          <strong>Moto</strong> intercepts all boto3 calls and runs them against an in-memory fake AWS.
+          No real AWS account needed, no network calls, and tests run in milliseconds.
+        </p>
+
+        <div class="callout callout-danger mb-6">
+          <p class="text-sm"><strong>🔴 Important</strong> &mdash;
+            Always set up mocks <em>before</em> creating boto3 clients.
+            The <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">@mock_aws</code> decorator or
+            fixture must be active before any <code class="text-xs">boto3.client()</code> call happens.
+          </p>
+        </div>
+
+        <h3 class="text-lg font-semibold mt-6 mb-3">Shared fixtures with moto</h3>
+        <div class="file-tab bg-ink-200 dark:bg-ink-800 text-ink-600 dark:text-ink-400">tests/conftest.py</div>
+        <pre class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-b-lg rounded-tr-lg p-4 text-sm leading-relaxed mb-6"><button class="copy-btn bg-ink-200 dark:bg-ink-800 hover:bg-ink-300 dark:hover:bg-ink-700 text-ink-600 dark:text-ink-400 text-xs px-2 py-1 rounded transition-colors" onclick="copyCode(this)">Copy</button><span class="st">"""Shared fixtures for all S3 tests."""</span>
+
+<span class="kw">import</span> os
+<span class="kw">import</span> pytest
+<span class="kw">from</span> moto <span class="kw">import</span> mock_aws
+
+
+<span class="dc">@pytest.fixture(autouse=True)</span>
+<span class="kw">def</span> <span class="fn">aws_credentials</span>():
+    <span class="st">"""Set fake AWS credentials so boto3 never touches real AWS."""</span>
+    os.environ[<span class="st">"AWS_ACCESS_KEY_ID"</span>] = <span class="st">"testing"</span>
+    os.environ[<span class="st">"AWS_SECRET_ACCESS_KEY"</span>] = <span class="st">"testing"</span>
+    os.environ[<span class="st">"AWS_SECURITY_TOKEN"</span>] = <span class="st">"testing"</span>
+    os.environ[<span class="st">"AWS_SESSION_TOKEN"</span>] = <span class="st">"testing"</span>
+    os.environ[<span class="st">"AWS_DEFAULT_REGION"</span>] = <span class="st">"us-east-1"</span>
+
+
+<span class="dc">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">mock_s3</span>():
+    <span class="st">"""Activate moto's mock for all AWS services."""</span>
+    <span class="kw">with</span> mock_aws():
+        <span class="kw">yield</span>
+
+
+<span class="dc">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">tmp_file</span>(tmp_path):
+    <span class="st">"""Create a small temp file for upload tests."""</span>
+    f = tmp_path / <span class="st">"hello.txt"</span>
+    f.write_text(<span class="st">"hello world"</span>)
+    <span class="kw">return</span> f</pre>
+
+        <h3 class="text-lg font-semibold mt-6 mb-3">Full test suite</h3>
+        <div class="file-tab bg-ink-200 dark:bg-ink-800 text-ink-600 dark:text-ink-400">tests/test_s3_manager.py</div>
+        <pre class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-b-lg rounded-tr-lg p-4 text-sm leading-relaxed mb-4"><button class="copy-btn bg-ink-200 dark:bg-ink-800 hover:bg-ink-300 dark:hover:bg-ink-700 text-ink-600 dark:text-ink-400 text-xs px-2 py-1 rounded transition-colors" onclick="copyCode(this)">Copy</button><span class="st">"""Tests for S3BucketManager — runs against moto, no real AWS needed."""</span>
+
+<span class="kw">import</span> pytest
+
+<span class="kw">from</span> src.bucket_type <span class="kw">import</span> BucketType
+<span class="kw">from</span> src.s3_manager <span class="kw">import</span> S3BucketManager
+
+
+<span class="cm"># ── BucketType enum tests ─────────────────────────────</span>
+
+<span class="kw">class</span> <span class="ty">TestBucketType</span>:
+    <span class="st">"""Verify the BucketType enum behaviour."""</span>
+
+    <span class="kw">def</span> <span class="fn">test_safe_prefix</span>(self):
+        <span class="kw">assert</span> BucketType.SAFE.value == <span class="st">"safe-"</span>
+
+    <span class="kw">def</span> <span class="fn">test_temp_prefix</span>(self):
+        <span class="kw">assert</span> BucketType.TEMP.value == <span class="st">"temp-"</span>
+
+    <span class="kw">def</span> <span class="fn">test_make_bucket_name</span>(self):
+        <span class="kw">assert</span> BucketType.TEMP.make_bucket_name(<span class="st">"uploads"</span>) == <span class="st">"temp-uploads"</span>
+        <span class="kw">assert</span> BucketType.SAFE.make_bucket_name(<span class="st">"reports"</span>) == <span class="st">"safe-reports"</span>
+
+
+<span class="cm"># ── Upload tests ──────────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="ty">TestUpload</span>:
+    <span class="st">"""Test file and byte uploads to both bucket types."""</span>
+
+    <span class="kw">def</span> <span class="fn">test_upload_file</span>(self, mock_s3, tmp_file):
+        manager = S3BucketManager(BucketType.TEMP, <span class="st">"uploads"</span>)
+        manager.create_bucket()
+
+        key = manager.upload_file(tmp_file)
+
+        <span class="kw">assert</span> key == <span class="st">"hello.txt"</span>
+        <span class="kw">assert</span> <span class="st">"hello.txt"</span> <span class="kw">in</span> manager.list_objects()
+
+    <span class="kw">def</span> <span class="fn">test_upload_file_custom_key</span>(self, mock_s3, tmp_file):
+        manager = S3BucketManager(BucketType.SAFE, <span class="st">"docs"</span>)
+        manager.create_bucket()
+
+        key = manager.upload_file(tmp_file, s3_key=<span class="st">"custom/path.txt"</span>)
+
+        <span class="kw">assert</span> key == <span class="st">"custom/path.txt"</span>
+
+    <span class="kw">def</span> <span class="fn">test_upload_bytes</span>(self, mock_s3):
+        manager = S3BucketManager(BucketType.TEMP, <span class="st">"raw"</span>)
+        manager.create_bucket()
+
+        key = manager.upload_bytes(<span class="st">b"raw data"</span>, <span class="st">"data.bin"</span>)
+
+        <span class="kw">assert</span> key == <span class="st">"data.bin"</span>
+        <span class="kw">assert</span> manager.download_bytes(<span class="st">"data.bin"</span>) == <span class="st">b"raw data"</span>
+
+    <span class="kw">def</span> <span class="fn">test_upload_missing_file_raises</span>(self, mock_s3):
+        manager = S3BucketManager(BucketType.TEMP, <span class="st">"uploads"</span>)
+        manager.create_bucket()
+
+        <span class="kw">with</span> pytest.raises(FileNotFoundError):
+            manager.upload_file(<span class="st">"/does/not/exist.txt"</span>)
+
+
+<span class="cm"># ── Download tests ────────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="ty">TestDownload</span>:
+    <span class="st">"""Test downloads to files and bytes."""</span>
+
+    <span class="kw">def</span> <span class="fn">test_download_file</span>(self, mock_s3, tmp_file, tmp_path):
+        manager = S3BucketManager(BucketType.SAFE, <span class="st">"docs"</span>)
+        manager.create_bucket()
+        manager.upload_file(tmp_file)
+
+        dest = tmp_path / <span class="st">"downloaded.txt"</span>
+        result = manager.download_file(<span class="st">"hello.txt"</span>, dest)
+
+        <span class="kw">assert</span> result.read_text() == <span class="st">"hello world"</span>
+
+    <span class="kw">def</span> <span class="fn">test_download_bytes</span>(self, mock_s3):
+        manager = S3BucketManager(BucketType.TEMP, <span class="st">"raw"</span>)
+        manager.create_bucket()
+        manager.upload_bytes(<span class="st">b"binary content"</span>, <span class="st">"file.bin"</span>)
+
+        data = manager.download_bytes(<span class="st">"file.bin"</span>)
+
+        <span class="kw">assert</span> data == <span class="st">b"binary content"</span>
+
+
+<span class="cm"># ── Cleanup tests ─────────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="ty">TestCleanup</span>:
+    <span class="st">"""Test the TEMP-only cleanup behaviour."""</span>
+
+    <span class="kw">def</span> <span class="fn">test_cleanup_deletes_all_objects</span>(self, mock_s3):
+        manager = S3BucketManager(BucketType.TEMP, <span class="st">"scratch"</span>)
+        manager.create_bucket()
+        manager.upload_bytes(<span class="st">b"a"</span>, <span class="st">"file1.txt"</span>)
+        manager.upload_bytes(<span class="st">b"b"</span>, <span class="st">"file2.txt"</span>)
+        manager.upload_bytes(<span class="st">b"c"</span>, <span class="st">"file3.txt"</span>)
+
+        deleted = manager.cleanup()
+
+        <span class="kw">assert</span> deleted == <span class="nu">3</span>
+        <span class="kw">assert</span> manager.list_objects() == []
+
+    <span class="kw">def</span> <span class="fn">test_cleanup_on_empty_bucket</span>(self, mock_s3):
+        manager = S3BucketManager(BucketType.TEMP, <span class="st">"empty"</span>)
+        manager.create_bucket()
+
+        <span class="kw">assert</span> manager.cleanup() == <span class="nu">0</span>
+
+    <span class="kw">def</span> <span class="fn">test_cleanup_raises_on_safe_bucket</span>(self, mock_s3):
+        manager = S3BucketManager(BucketType.SAFE, <span class="st">"important"</span>)
+        manager.create_bucket()
+
+        <span class="kw">with</span> pytest.raises(ValueError, match=<span class="st">"only allowed on TEMP"</span>):
+            manager.cleanup()
+
+
+<span class="cm"># ── Listing tests ─────────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="ty">TestListObjects</span>:
+    <span class="st">"""Test object listing and prefix filtering."""</span>
+
+    <span class="kw">def</span> <span class="fn">test_list_objects_with_prefix</span>(self, mock_s3):
+        manager = S3BucketManager(BucketType.TEMP, <span class="st">"data"</span>)
+        manager.create_bucket()
+        manager.upload_bytes(<span class="st">b"1"</span>, <span class="st">"reports/jan.csv"</span>)
+        manager.upload_bytes(<span class="st">b"2"</span>, <span class="st">"reports/feb.csv"</span>)
+        manager.upload_bytes(<span class="st">b"3"</span>, <span class="st">"logs/app.log"</span>)
+
+        reports = manager.list_objects(prefix=<span class="st">"reports/"</span>)
+
+        <span class="kw">assert</span> <span class="nb">len</span>(reports) == <span class="nu">2</span>
+        <span class="kw">assert</span> <span class="st">"logs/app.log"</span> <span class="kw">not in</span> reports</pre>
+      </section>
+
+      <!-- BEST PRACTICES -->
+      <section id="best-practices" class="mb-16">
+        <h2 class="text-2xl font-bold mb-4">9 &middot; Best Practices Checklist</h2>
+
+        <div class="space-y-4">
+          <div class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5">
+            <h3 class="font-semibold mb-2 text-teal-600 dark:text-teal-400">🔐 Never hardcode AWS credentials</h3>
+            <p class="text-sm text-ink-700 dark:text-ink-300">Use IAM roles, environment variables, or the <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">~/.aws/credentials</code> file. Never commit secrets to git.</p>
+          </div>
+
+          <div class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5">
+            <h3 class="font-semibold mb-2 text-teal-600 dark:text-teal-400">📛 Use Enums for bucket categories</h3>
+            <p class="text-sm text-ink-700 dark:text-ink-300">Enums make your code self-documenting. <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">BucketType.TEMP</code> is clearer and safer than the string <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">"temp"</code>.</p>
+          </div>
+
+          <div class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5">
+            <h3 class="font-semibold mb-2 text-teal-600 dark:text-teal-400">🧪 Test with moto, not real AWS</h3>
+            <p class="text-sm text-ink-700 dark:text-ink-300">Moto runs in-memory and needs no AWS account. Tests are fast, free, and repeatable. Always set fake credentials in your fixtures.</p>
+          </div>
+
+          <div class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5">
+            <h3 class="font-semibold mb-2 text-teal-600 dark:text-teal-400">🗂 Put fixtures in conftest.py</h3>
+            <p class="text-sm text-ink-700 dark:text-ink-300">Shared setup (like <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">mock_s3</code>) goes in <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">conftest.py</code>. Pytest auto-discovers it — no imports needed in test files.</p>
+          </div>
+
+          <div class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5">
+            <h3 class="font-semibold mb-2 text-teal-600 dark:text-teal-400">🛡 Guard destructive operations</h3>
+            <p class="text-sm text-ink-700 dark:text-ink-300">The <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">cleanup()</code> method checks <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">bucket_type</code> and raises if it's not TEMP. Always add guardrails around delete operations.</p>
+          </div>
+
+          <div class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5">
+            <h3 class="font-semibold mb-2 text-teal-600 dark:text-teal-400">📝 Use type hints everywhere</h3>
+            <p class="text-sm text-ink-700 dark:text-ink-300">Type hints like <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">str | Path</code> and <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">-> list[str]</code> make your code readable and let tools catch bugs before runtime.</p>
+          </div>
+
+          <div class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5">
+            <h3 class="font-semibold mb-2 text-teal-600 dark:text-teal-400">📊 Use logging, not print()</h3>
+            <p class="text-sm text-ink-700 dark:text-ink-300">The <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">logging</code> module lets you control verbosity with levels (DEBUG, INFO, WARNING). Print statements get messy fast.</p>
+          </div>
+
+          <div class="bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5">
+            <h3 class="font-semibold mb-2 text-teal-600 dark:text-teal-400">🔄 Use paginators for listing</h3>
+            <p class="text-sm text-ink-700 dark:text-ink-300">S3 returns at most 1,000 objects per request. Always use <code class="text-xs bg-ink-200 dark:bg-ink-800 px-1 py-0.5 rounded">get_paginator("list_objects_v2")</code> to handle buckets with many files.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESOURCES -->
+      <section id="resources" class="mb-16">
+        <h2 class="text-2xl font-bold mb-4">10 &middot; Resources &amp; Official Docs</h2>
+        <p class="mb-6 text-ink-700 dark:text-ink-300">Bookmark these — they're the definitive references for everything in this tutorial.</p>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+
+          <a href="https://docs.python.org/3/" target="_blank" rel="noopener"
+             class="block bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5 hover:border-teal-500 dark:hover:border-teal-400 transition-colors group">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xl">🐍</span>
+              <h3 class="font-semibold group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">Python 3.12 Docs</h3>
+            </div>
+            <p class="text-xs text-ink-500 dark:text-ink-400 font-mono">docs.python.org/3</p>
+          </a>
+
+          <a href="https://docs.aws.amazon.com/boto3/latest/" target="_blank" rel="noopener"
+             class="block bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5 hover:border-teal-500 dark:hover:border-teal-400 transition-colors group">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xl">☁️</span>
+              <h3 class="font-semibold group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">Boto3 Documentation</h3>
+            </div>
+            <p class="text-xs text-ink-500 dark:text-ink-400 font-mono">docs.aws.amazon.com/boto3</p>
+          </a>
+
+          <a href="https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html" target="_blank" rel="noopener"
+             class="block bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5 hover:border-teal-500 dark:hover:border-teal-400 transition-colors group">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xl">🪣</span>
+              <h3 class="font-semibold group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">Boto3 S3 API Reference</h3>
+            </div>
+            <p class="text-xs text-ink-500 dark:text-ink-400 font-mono">boto3.amazonaws.com/.../s3.html</p>
+          </a>
+
+          <a href="https://docs.pytest.org/en/stable/" target="_blank" rel="noopener"
+             class="block bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5 hover:border-teal-500 dark:hover:border-teal-400 transition-colors group">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xl">🧪</span>
+              <h3 class="font-semibold group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">Pytest 9.x Documentation</h3>
+            </div>
+            <p class="text-xs text-ink-500 dark:text-ink-400 font-mono">docs.pytest.org/en/stable</p>
+          </a>
+
+          <a href="https://docs.pytest.org/en/stable/how-to/fixtures.html" target="_blank" rel="noopener"
+             class="block bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5 hover:border-teal-500 dark:hover:border-teal-400 transition-colors group">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xl">🔧</span>
+              <h3 class="font-semibold group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">Pytest Fixtures Guide</h3>
+            </div>
+            <p class="text-xs text-ink-500 dark:text-ink-400 font-mono">docs.pytest.org/.../fixtures.html</p>
+          </a>
+
+          <a href="https://docs.getmoto.org/en/latest/docs/getting_started.html" target="_blank" rel="noopener"
+             class="block bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5 hover:border-teal-500 dark:hover:border-teal-400 transition-colors group">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xl">🎭</span>
+              <h3 class="font-semibold group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">Moto — Getting Started</h3>
+            </div>
+            <p class="text-xs text-ink-500 dark:text-ink-400 font-mono">docs.getmoto.org</p>
+          </a>
+
+          <a href="https://docs.python.org/3/library/enum.html" target="_blank" rel="noopener"
+             class="block bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5 hover:border-teal-500 dark:hover:border-teal-400 transition-colors group">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xl">🏷</span>
+              <h3 class="font-semibold group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">Python Enum Reference</h3>
+            </div>
+            <p class="text-xs text-ink-500 dark:text-ink-400 font-mono">docs.python.org/.../enum.html</p>
+          </a>
+
+          <a href="https://docs.python.org/3/library/logging.html" target="_blank" rel="noopener"
+             class="block bg-ink-100 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-xl p-5 hover:border-teal-500 dark:hover:border-teal-400 transition-colors group">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xl">📋</span>
+              <h3 class="font-semibold group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">Python Logging Module</h3>
+            </div>
+            <p class="text-xs text-ink-500 dark:text-ink-400 font-mono">docs.python.org/.../logging.html</p>
+          </a>
+
+        </div>
+      </section>
+
+      <!-- FOOTER -->
+      <footer class="border-t border-ink-200 dark:border-ink-800 pt-8 mt-12 text-sm text-ink-500 dark:text-ink-400">
+        <div class="flex flex-col sm:flex-row justify-between gap-2">
+          <p>Python &amp; AWS S3 Best Practices Tutorial</p>
+          <p class="font-mono text-xs">
+            boto3 ~1.42 &middot; pytest 9.x &middot; moto 5.x &middot; Python 3.12+
+          </p>
+        </div>
+      </footer>
+
+    </main>
+  </div>
+
+  <!-- ───────── SCRIPTS ───────── -->
+  <script>
+    // ── Dark mode toggle ────────────────────────────────
+    const html = document.documentElement;
+    const toggle = document.getElementById('themeToggle');
+
+    // Restore saved preference or respect system setting
+    if (localStorage.getItem('theme') === 'dark' ||
+        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      html.classList.add('dark');
+    }
+
+    toggle.addEventListener('click', () => {
+      html.classList.toggle('dark');
+      localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+    });
+
+    // ── Copy code button ────────────────────────────────
+    function copyCode(btn) {
+      const pre = btn.closest('pre');
+      // Get text content, remove the button text itself
+      const code = pre.textContent.replace('Copy', '').trim();
+      navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 1500);
+      });
+    }
+
+    // ── Active nav link on scroll ───────────────────────
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    function highlightNav() {
+      let current = '';
+      sections.forEach(section => {
+        const top = section.offsetTop - 100;
+        if (window.scrollY >= top) {
+          current = section.getAttribute('id');
+        }
+      });
+      navLinks.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === `#${current}`);
+      });
+    }
+
+    window.addEventListener('scroll', highlightNav, { passive: true });
+    highlightNav();
+
+    // ── Mobile menu ─────────────────────────────────────
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileNav = document.getElementById('mobileNav');
+    const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+
+    function toggleMobileMenu() {
+      mobileNav.classList.toggle('hidden');
+    }
+
+    mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+    mobileNavOverlay.addEventListener('click', toggleMobileMenu);
+
+    // Close mobile nav when a link is clicked
+    mobileNav.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', toggleMobileMenu);
+    });
+  </script>
+
+</body>
+</html>
